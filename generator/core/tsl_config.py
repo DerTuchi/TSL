@@ -16,10 +16,17 @@ from generator.utils.yaml_schema import Schema
 from generator.utils.yaml_utils import yaml_load, SafeLineLoader
 from yaml.loader import SafeLoader
 
+from generator.core.utils.tsl_rust_filter import *
+
 class TSLGeneratorConfig:
     class JinjaConfig:
         def __init__(self, root_path: Path):
             self.__env = Environment(trim_blocks=True, lstrip_blocks=True, loader=FileSystemLoader(f"{root_path.resolve()}"))
+            self.__env.filters['ctype_filter_to_rust'] = ctype_filter_to_rust
+            self.__env.filters['reg_filter_to_rust'] = reg_filter_to_rust
+            self.__env.filters['filter_element_count'] = filter_element_count
+            self.__env.filters['filter_implementation'] = filter_implementation
+            self.__env.filters['return_filter'] = return_filter
 
         @property
         def env(self) -> Environment:

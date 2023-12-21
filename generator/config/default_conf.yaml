@@ -2,8 +2,9 @@
 configuration:
    namespace:                     "tsl"
    tsl_implementation_namespace:  "functors"
-   header_file_extension:         ".hpp"
+   header_file_extension:         ".h"
    source_file_extension:         ".cpp"
+   rust_extension:                ".rs"
    root_path:                     "./generated_tsl"
    compiler_architecture_prefix:  "-m"
    use_concepts:                  True
@@ -21,6 +22,7 @@ configuration:
          extensions:              "extensions"
          primitive_declarations:  "declarations"
          primitive_definitions:   "definitions"
+         bridge: "bridge"
    silent_warnings:               ["-Wno-ignored-attributes", "-Wno-attributes"]
    expansions:
       primitive_vis:

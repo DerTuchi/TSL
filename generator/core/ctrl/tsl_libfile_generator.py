@@ -3,6 +3,9 @@ from generator.core.tsl_config import config
 
 import copy
 import logging
+from collections import defaultdict
+import re
+
 from pathlib import Path
 from typing import Generator
 
@@ -130,6 +133,182 @@ class TSLFileGenerator:
             self.__primitive_class_declarations.append(declaration_file)
             self.__primitive_class_definitions.extend(definition_files_per_extension_dict.values())
 
+    def __create_primitive_header_files_rust(self, extension_set: TSLExtensionSet,
+                                        primitive_class_set: TSLPrimitiveClassSet):
+        self.log(logging.INFO, f"Starting generation of primitive header.")
+        def ctype_filter(value):
+            # Dictionary mapping C data types to Rust data types
+            if 'const' in value:
+                value = value.replace('const ', '')
+            type_mapping = {
+                    'uint8_t': 'u8',
+                    'int8_t': 'i8',
+                    'uint16_t': 'u16',
+                    'int16_t': 'i16',
+                    'unsigned int': 'u32',
+                    'uint32_t': 'u32',
+                    'int32_t': 'i32',
+                    'int': 'i32',
+                    'unsigned long': 'u64',
+                    'long': 'i64',
+                    'signed long': 'i64',
+                    'unsigned long long': 'u64',
+                    'long long': 'i64',
+                    'signed long long': 'i64',
+                    'uint64_t': 'u64',
+                    'int64_t': 'i64',
+                    'float': 'f32',
+                    'double': 'f64',
+                    'long double': 'f64',  # Note: Rust doesn't have a direct equivalent to C++'s long double
+                    'size_t': 'usize',
+                    'std::size_t': 'usize',
+                    'char': 'i8',  # Assuming signed char in C++
+                    'unsigned char': 'u8',
+                    'short': 'i16',
+                    'unsigned short': 'u16',
+                    'bool': 'bool',
+                    'std::string': 'String',  # Note: Requires handling conversion between C++ strings and Rust strings
+                    # Add more mappings as needed
+                }
+            return type_mapping.get(value, value)
+        
+        def filter_element_count(ctype, extension) -> int:
+            match = re.search(r'\d+', ctype)
+            if match:
+                number = int(match.group())
+                dict = {
+                    'scalar': number,
+                    'sse': 128,
+                    'avx2': 256,
+                    'avx512': 512
+                }
+                return (int)(dict.get(extension) / number)
+            else:
+                return 0
+
+        # C++ Bridge file generation
+        for primitive_class in primitive_class_set:
+            declaration_file_path: Path = config.get_generation_path("bridge").joinpath(
+                            config.get_library_config_entry("hardware_specific_files")["primitive_declarations"]).joinpath(
+                            primitive_class.file_name).joinpath(primitive_class.name).with_suffix(
+                            config.get_config_entry("header_file_extension"))
+            declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
+                                                                             primitive_class.data)
+            
+            definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
+            for primitive in primitive_class:
+                # C++ declaration file
+                declaration_data = copy.deepcopy(primitive.declaration.data)
+                declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
+                    declaration_data)
+                declaration_file.import_includes(declaration_data)
+                for definition in primitive.definitions:
+                    definition_copy = copy.deepcopy(definition.data)
+                    for ctype, additional_simd_template_base_type in definition.types:
+                        definition_copy["ctype"] = ctype
+                        definition_copy["element_count"] = filter_element_count((str)(ctype_filter(ctype)), definition.target_extension)
+                        decl_and_def_combined_data = { **extension_set.get_extension_by_name(
+                            definition.target_extension).data, **declaration_data, **definition_copy }
+                        declaration_file.add_code(
+                            config.get_template("rust::bridge_declaration").render(decl_and_def_combined_data))
+                        
+                # C++ Bridge definitons
+                for definition in primitive.definitions:
+                    if definition.target_extension not in definition_files_per_extension_dict:
+                        primitive_path: Path = config.get_generation_path("bridge").joinpath(
+                            config.get_library_config_entry("hardware_specific_files")["primitive_definitions"]).joinpath(
+                            primitive_class.file_name).joinpath(primitive_class.name).joinpath(
+                            f"{primitive_class.name}_{definition.target_extension}").with_suffix(
+                            config.get_config_entry("source_file_extension"))
+                        definition_files_per_extension_dict[
+                            definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
+                                                                                          primitive_class.data)
+                    definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
+                    
+                    definition_copy = copy.deepcopy(definition.data)
+
+                    for ctype, additional_simd_template_base_type in definition.types:
+                        definition_copy["ctype"] = ctype
+                        definition_copy["additional_simd_template_base_type"] = additional_simd_template_base_type
+                        decl_and_def_combined_data = { **extension_set.get_extension_by_name(
+                            definition.target_extension).data, **declaration_data, **definition_copy }
+                        decl_and_def_combined_data["implementation"] = config.create_template(
+                            definition_copy["implementation"]).render(
+                            decl_and_def_combined_data)
+                        definition_file.add_code(
+                            config.get_template("rust::bridge_definiton").render(decl_and_def_combined_data))
+                        self.log(logging.INFO,
+                                 f"Created template specialization for {primitive.declaration.name} (details::{primitive.declaration.name}_impl<simd<{ctype}, {definition.target_extension}>>)")
+                    
+                    definition_file.import_includes(definition.data)
+                    definition_file.add_file_include(declaration_file)
+
+            self.__primitive_class_declarations.append(declaration_file)
+            self.__primitive_class_definitions.extend(definition_files_per_extension_dict.values())
+
+        # Rust file Generation
+        for primitive_class in primitive_class_set:
+            declaration_file_path: Path = config.get_generation_path("primitive_declarations").joinpath(
+                primitive_class.file_name).joinpath(primitive_class.name).with_suffix(
+                config.get_config_entry("rust_extension"))
+            declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
+                                                                             primitive_class.data)
+
+            definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
+        
+            codes = defaultdict(list)
+            for primitive in primitive_class:
+                declaration_data = copy.deepcopy(primitive.declaration.data)
+                declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
+                    declaration_data)
+                declaration_file.add_code(
+                    config.get_template("rust::primitive_declaration").render(declaration_data))
+                declaration_file.import_includes(declaration_data)
+
+                # Rust definitions
+                for definition in primitive.definitions:
+                    if definition.target_extension not in definition_files_per_extension_dict:
+                        primitive_path: Path = config.get_generation_path("primitive_definitions").joinpath(
+                            primitive_class.file_name).joinpath(primitive_class.name).joinpath(
+                            f"{primitive_class.name}_{definition.target_extension}").with_suffix(
+                            config.get_config_entry("rust_extension"))
+                        definition_files_per_extension_dict[
+                            definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
+                                                                                          primitive_class.data)
+                    definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
+
+                    definition_copy = copy.deepcopy(definition.data)
+                    for ctype, additional_simd_template_base_type in definition.types:
+                        definition_copy["ctype"] = ctype
+                        definition_copy["additional_simd_template_base_type"] = additional_simd_template_base_type
+                        definition_copy["element_count"] = filter_element_count((str)(ctype_filter(ctype)), definition.target_extension)
+                        
+                        decl_and_def_combined_data = { **extension_set.get_extension_by_name(
+                            definition.target_extension).data, **declaration_data, **definition_copy }
+                        decl_and_def_combined_data["implementation"] = config.create_template(
+                            definition_copy["implementation"]).render(
+                            decl_and_def_combined_data)
+                        
+                        codes[definition.target_extension].append(config.get_template("rust::bridge_helper").render(decl_and_def_combined_data))
+                        definition_file.add_code(
+                            config.get_template("rust::primitive_definition").render(decl_and_def_combined_data))
+                        self.log(logging.INFO,
+                                 f"Created template specialization for {primitive.declaration.name} (details::{primitive.declaration.name}_impl<simd<{ctype}, {definition.target_extension}>>)")
+                        
+                    definition_file.import_includes(definition.data)
+                    definition_file.add_file_include(declaration_file)
+            
+            # Bridge Module
+            for target_extension in codes:
+                definition_file: TSLHeaderFile = definition_files_per_extension_dict[target_extension]
+                data = {}
+                data["codes"] = codes[target_extension]
+                data["file_name"] = primitive_class.data["name"]
+                definition_file.add_code(config.get_template("rust::bridge_header").render(data))
+
+            self.__primitive_class_declarations.append(declaration_file)
+            self.__primitive_class_definitions.extend(definition_files_per_extension_dict.values())
+
     def __create_static_header_files(self) -> None:
         self.log(logging.INFO, f"Starting generation of static header.")
         for static_yaml_file_path in config.static_lib_files():
@@ -167,8 +346,9 @@ class TSLFileGenerator:
         self.__primitive_class_declarations: List[TSLHeaderFile] = []
         self.__primitive_class_definitions: List[TSLHeaderFile] = []
 
-        self.__create_extension_header_files(lib.extension_set)
-        self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+        # self.__create_extension_header_files(lib.extension_set)
+        # self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+        self.__create_primitive_header_files_rust(lib.extension_set, lib.primitive_class_set)
 
         self.__create_static_header_files()
         # dep_graph = TSLDependencyGraph(lib)

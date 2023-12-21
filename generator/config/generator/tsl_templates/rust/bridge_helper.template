@@ -1,0 +1,12 @@
+{% set ns = namespace (
+    param_full = ''
+)%}
+{% for param in parameters %}
+    {% if not loop.last %}
+        {% set comma = ', ' %}
+    {% else %}
+        {% set comma = '' %}
+    {% endif %}
+    {% set ns.param_full = ns.param_full ~ param['name'] ~ ': [' ~ ctype | ctype_filter_to_rust ~ ';' ~ element_count ~ ']' ~ comma %}
+{% endfor %}
+fn {{functor_name}}_{{target_extension}}_{{ctype | ctype_filter_to_rust}}({{ns.param_full}}) -> {{returns['ctype'] | return_filter(ctype | ctype_filter_to_rust, element_count)}};

@@ -23,6 +23,8 @@ class TSLHeaderFile:
         self.__data_dict = copy.deepcopy(data_dict)
         if "tsl_predefined_file_includes" not in self.__data_dict:
             self.__data_dict["tsl_predefined_file_includes"] = []
+        if "target_language" not in self.__data_dict:
+            self.__data_dict["target_language"] = ["core"]
 
     @property
     def data(self) -> YamlDataType:
@@ -77,7 +79,7 @@ class TSLHeaderFile:
         tsl_file_includes = [f"\"{Path(os.path.relpath(Path(included_file.file_name), current_path))}\"" for included_file in self.__data_dict["tsl_file_includes"]]
         self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_file_includes if tsl_include not in self.__data_dict["includes"]])
         self.__data_dict["includes"].extend(self.__data_dict["tsl_predefined_file_includes"])
-        return config.get_template("core::header_file").render(self.__data_dict)
+        return config.get_template(f'{self.__data_dict["target_language"]}::header_file').render(self.__data_dict)
 
     def render_to_file(self) -> None:
         self.__filename.write_text(self.render())
@@ -89,7 +91,7 @@ class TSLHeaderFile:
 
     @staticmethod
     @requirement(filename="NotNone", data_dict="NotNone")
-    def create_from_dict(filename: Path, data_dict: YamlDataType) -> TSLHeaderFile:
+    def create_from_dict(filename: Path, data_dict: YamlDataType, target_language = "core") -> TSLHeaderFile:
         new_data_dict: YamlDataType = {
             # "file_name": filename,
             "year": datetime.date.today().year,
@@ -104,7 +106,8 @@ class TSLHeaderFile:
             "tsl_namespace": config.get_config_entry("namespace"),
             "tsl_file_includes": [],
             "includes": [],
-            "codes": []
+            "codes": [],
+            "target_language": target_language
         }
         return TSLHeaderFile(filename, {**new_data_dict, **data_dict})
 

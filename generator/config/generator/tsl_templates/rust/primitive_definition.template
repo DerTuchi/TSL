@@ -29,7 +29,7 @@
    {% set ns.full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns.simd_register_length~ '>' %}
 {% else %}
    {% set ns.simd_register_length = '' %}
-   {% set ns.full_extension_name = ctype | ctype_filter_to_rust ~ ', ' ~ target_extension %}
+   {% set ns.full_extension_name = ctype_rust ~ ', ' ~ target_extension %}
 {% endif %}
 {% if ctype == 'T' %}
 {% set ns.partial_specialized = True %}
@@ -58,7 +58,7 @@
       {% else %}
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
-      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ((ctype | ctype_filter_to_rust, target_extension), param['ctype']) | reg_filter_to_rust  ~ comma %}
+      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype_rust | filter_reg_cpp(target_extension, param['ctype'])  ~ comma %}
       {% set ns.full_qualified_parameters_str_bridge = ns.full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
       {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
       {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
@@ -88,7 +88,7 @@ impl {{ functor_name }}<{{ ns.full_extension_name }}> {
      * @brief: Template specialization of implementation for "{{ functor_name }}" (primitive {{ primitive_name }}).
      * @details:
      * Target Extension: {{ target_extension }}.
-     *        Data Type: {{ ctype | ctype_filter_to_rust }}
+     *        Data Type: {{ ctype_rust }}
      *  Extension Flags: {{ lscpu_flags }}
      {% if yaml_origin_line and yaml_origin_file %}
      *      Yaml Source: {{ yaml_origin_file }}::{{ yaml_origin_line }}
@@ -110,11 +110,11 @@ impl {{ functor_name }}<{{ ns.full_extension_name }}> {
 
     {{ '#[must_use] ' if returns['ctype'] != 'void' else ''}}{{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
     {{ '#[inline(always)]' if force_inline else '' }}
-    pub fn apply({{ ns.full_qualified_parameters_str }}) -> {{((ctype | ctype_filter_to_rust, target_extension), returns['ctype']) | reg_filter_to_rust}}{
+    pub fn apply({{ ns.full_qualified_parameters_str }}) -> {{ctype_rust | filter_reg_cpp(target_extension, returns['ctype'])}}{
         {% for param in parameters %}
-        let {{param['name']}}_arr: [{{ctype | ctype_filter_to_rust}} ; {{element_count}}] = unsafe {std::mem::transmute({{param['name']}})};
+        let {{param['name']}}_arr: [{{ctype_rust}} ; {{element_count}}] = unsafe {std::mem::transmute({{param['name']}})};
         {% endfor %}
-        let result = ffi::{{functor_name}}_{{target_extension}}_{{ctype | ctype_filter_to_rust}}({{ns.full_qualified_parameters_str_bridge}});
+        let result = ffi::{{functor_name}}_{{target_extension}}_{{ctype_rust}}({{ns.full_qualified_parameters_str_bridge}});
         unsafe {std::mem::transmute(result)}
     }
 } // end of struct {{ functor_name }} for template specialization of {{ functor_name }} for {{ target_extension }} using {{ ctype }}.

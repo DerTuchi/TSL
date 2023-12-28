@@ -1,9 +1,9 @@
 import re
 
-def ctype_filter_to_rust(value):
+def filter_ctype_rust(ctype):
    # Dictionary mapping C data types to Rust data types
-   if 'const' in value:
-       value = value.replace('const ', '')
+   if 'const' in ctype:
+       ctype = ctype.replace('const ', '')
    type_mapping = {
         'uint8_t': 'u8',
         'int8_t': 'i8',
@@ -32,11 +32,10 @@ def ctype_filter_to_rust(value):
         'unsigned short': 'u16',
         'bool': 'bool',
         'std::string': 'String',  # Note: Requires handling conversion between C++ strings and Rust strings
-        # Add more mappings as needed
     }
-   return type_mapping.get(value)
+   return type_mapping.get(ctype, ctype)
 
-def return_filter(return_type, ctype, element_count):
+def filter_reg_rust(return_type, ctype, element_count):
     if "Vec::base_type" in return_type:
         return ctype
     elif "Vec::register_type":
@@ -44,31 +43,31 @@ def return_filter(return_type, ctype, element_count):
     else:
         return return_type
 
-def reg_filter_to_rust(value):
-    if "Vec::base_type" in value[1]:
-        return value[0][0]
-    elif "Vec::register_type" in value[1]:
+def filter_reg_cpp(ctype, target_extension, register_type):
+    # Temporary. Find fix
+    ctype_rust = filter_ctype_rust(ctype)
+    if "register_type" in register_type:
         result = '__m'
         type_mapping = {
-            'scalar': value[0][0],
+            'scalar': ctype_rust,
             'sse': 128,
             'avx2': 256,
             'avx512': 512
         }
-        if type_mapping.get(value[0][1]) == value[0][0]:
-            return value[0][0]
+        if type_mapping.get(target_extension) == ctype_rust:
+            return ctype_rust
         else:
-            result += (str)(type_mapping.get(value[0][1]))
-            if value[0][0][0] == 'i' or value[0][0][0] == 'u':
+            result += (str)(type_mapping.get(target_extension))
+            if ctype_rust[0] == 'i' or ctype_rust[0] == 'u':
                 result += 'i'
-            if 'f64' in value[0][0]:
+            elif 'f64' == ctype_rust:
                 result += 'd'
         return result
     else:
-        return ctype_filter_to_rust(value[1])
+        return ctype
     
-def filter_element_count(value) -> int:
-    match = re.search(r'\d+', value[0])
+def filter_element_count(ctype, target_extension) -> int:
+    match = re.search(r'\d+', ctype)
     if match:
         number = int(match.group())
         dict = {
@@ -77,17 +76,12 @@ def filter_element_count(value) -> int:
             'avx2': 256,
             'avx512': 512
         }
-        return (int)(dict.get(value[1]) / number)
+        return (int)(dict.get(target_extension) / number)
     else:
-        raise ValueError("Smth went wrong")
+        return 0
 
-def filter_implementation(value):
-    text = value[0]
-    replace_message = value[1]
-
+def filter_implementation(text, replace_message):
     pattern = r'return (.*);'
 
     replacement = f'auto return_rs = \\1;\n\treturn {replace_message}(&return_rs);'
     return re.sub(pattern, replacement, text)
-
-

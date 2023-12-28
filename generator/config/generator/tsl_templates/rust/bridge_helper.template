@@ -7,6 +7,6 @@
     {% else %}
         {% set comma = '' %}
     {% endif %}
-    {% set ns.param_full = ns.param_full ~ param['name'] ~ ': [' ~ ctype | ctype_filter_to_rust ~ ';' ~ element_count ~ ']' ~ comma %}
+    {% set ns.param_full = ns.param_full ~ param['name'] ~ ': [' ~ ctype | filter_ctype_rust ~ ';' ~ element_count ~ ']' ~ comma %}
 {% endfor %}
-fn {{functor_name}}_{{target_extension}}_{{ctype | ctype_filter_to_rust}}({{ns.param_full}}) -> {{returns['ctype'] | return_filter(ctype | ctype_filter_to_rust, element_count)}};
+fn {{functor_name}}_{{target_extension}}_{{ctype | filter_ctype_rust}}({{ns.param_full}}) -> {{returns['ctype'] | filter_reg_rust(ctype | filter_ctype_rust, element_count)}};

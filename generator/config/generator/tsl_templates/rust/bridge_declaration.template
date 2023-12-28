@@ -28,7 +28,7 @@
    {% set ns.full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns.simd_register_length~ '>' %}
 {% else %}
    {% set ns.simd_register_length = '' %}
-   {% set ns.full_extension_name = ctype | ctype_filter_to_rust ~ ', ' ~ target_extension %}
+   {% set ns.full_extension_name = ctype | filter_ctype_rust ~ ', ' ~ target_extension %}
 {% endif %}
 {% if ctype == 'T' %}
 {% set ns.partial_specialized = True %}
@@ -81,4 +81,4 @@
 {% set ns.additional_template_params = ns.additional_template_params ~ ", " %}
 {% endif %}
 {# Every implementation is in the (nested) namespace "details" #}
-std::array<{{ctype}}, {{element_count}}> {{ functor_name }}_{{target_extension}}_{{ctype | ctype_filter_to_rust}}({{ns.full_qualified_parameters_str}});
+std::array<{{ctype}}, {{element_count}}> {{ functor_name }}_{{target_extension}}_{{ctype | filter_ctype_rust}}({{ns.full_qualified_parameters_str}});

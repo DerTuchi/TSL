@@ -27,8 +27,8 @@
    {% set ns.simd_register_length = ', ' ~ vector_length_bits %}
    {% set ns.full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns.simd_register_length~ '>' %}
 {% else %}
-   {% set ns.simd_register_length = '' ~ (ctype | ctype_filter_to_rust, target_extension) | filter_element_count %}
-   {% set ns.full_extension_name = ctype | ctype_filter_to_rust ~ ', ' ~ target_extension %}
+   {% set ns.simd_register_length = '' ~ ctype | filter_ctype_rust | filter_element_count (target_extension) %}
+   {% set ns.full_extension_name = ctype | filter_ctype_rust ~ ', ' ~ target_extension %}
 {% endif %}
 {% if ctype == 'T' %}
 {% set ns.partial_specialized = True %}
@@ -57,7 +57,7 @@
       {% else %}
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
-      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ 'std::array<'~ ctype ~ ', ' ~ ns.simd_register_length ~ '> ' ~ param['name'] ~ '_data' ~ comma %}
+      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ 'std::array<'~ ctype ~ ', ' ~ param['arr_length'] ~ '> ' ~ param['name'] ~ '_data' ~ comma %}
       {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
       {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
    {% endif %}
@@ -94,11 +94,11 @@
     * @note: {{ specialization_comment }}
     {% endif %}
 */
-std::array<{{ctype}}, {{ns.simd_register_length}}> {{ functor_name }}_{{target_extension}}_{{ctype | ctype_filter_to_rust}}({{ns.full_qualified_parameters_str}}){
+std::array<{{ctype}}, {{ns.simd_register_length}}> {{ functor_name }}_{{target_extension}}_{{ctype | filter_ctype_rust}}({{ns.full_qualified_parameters_str}}){
     {% for param in parameters %}
-    const {{((ctype | ctype_filter_to_rust, target_extension), param['ctype']) | reg_filter_to_rust}}* {{param['name']}}_ptr = reinterpret_cast<const {{((ctype | ctype_filter_to_rust, target_extension), param['ctype']) | reg_filter_to_rust}}*>({{param['name']}}_data.data());
-    {{((ctype | ctype_filter_to_rust, target_extension), param['ctype']) | reg_filter_to_rust}} {{param['name']}} = *{{param['name']}}_ptr;
+    const {{ctype | filter_reg_cpp(target_extension, param['ctype'])}}* {{param['name']}}_ptr = reinterpret_cast<const {{ctype | filter_reg_cpp(target_extension, param['ctype'])}}*>({{param['name']}}_data.data());
+    {{ctype | filter_reg_cpp(target_extension, param['ctype'])}} {{param['name']}} = *{{param['name']}}_ptr;
     {% endfor %}
 
-    {{ (implementation, '*reinterpret_cast<std::array<' ~ ctype ~ ', ' ~ ns.simd_register_length ~ '>*>')  | filter_implementation }}
+    {{ implementation | filter_implementation('*reinterpret_cast<std::array<' ~ ctype ~ ', ' ~ ns.simd_register_length ~ '>*>') }}
 } // end of {{ functor_name }} for {{ target_extension }} using {{ ctype }}.

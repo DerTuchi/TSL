@@ -69,4 +69,4 @@
 {% endif %}
 {# Every implementation is in the (nested) namespace "functors" #}
 {# This is the forward declaration of the actual primitive implementation struct #}
-pub struct {{functor_name}}<simd>(PhantomData<BaseType>, PhantomData<ExtensionType>);
+pub struct {{functor_name}}<BaseType, ExtensionType>(PhantomData<BaseType>, PhantomData<ExtensionType>);

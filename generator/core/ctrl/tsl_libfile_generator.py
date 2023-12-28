@@ -5,6 +5,7 @@ import copy
 import logging
 from collections import defaultdict
 import re
+from generator.core.utils.tsl_rust_filter import *
 
 from pathlib import Path
 from typing import Generator
@@ -136,55 +137,6 @@ class TSLFileGenerator:
     def __create_primitive_header_files_rust(self, extension_set: TSLExtensionSet,
                                         primitive_class_set: TSLPrimitiveClassSet):
         self.log(logging.INFO, f"Starting generation of primitive header.")
-        def ctype_filter(value):
-            # Dictionary mapping C data types to Rust data types
-            if 'const' in value:
-                value = value.replace('const ', '')
-            type_mapping = {
-                    'uint8_t': 'u8',
-                    'int8_t': 'i8',
-                    'uint16_t': 'u16',
-                    'int16_t': 'i16',
-                    'unsigned int': 'u32',
-                    'uint32_t': 'u32',
-                    'int32_t': 'i32',
-                    'int': 'i32',
-                    'unsigned long': 'u64',
-                    'long': 'i64',
-                    'signed long': 'i64',
-                    'unsigned long long': 'u64',
-                    'long long': 'i64',
-                    'signed long long': 'i64',
-                    'uint64_t': 'u64',
-                    'int64_t': 'i64',
-                    'float': 'f32',
-                    'double': 'f64',
-                    'long double': 'f64',  # Note: Rust doesn't have a direct equivalent to C++'s long double
-                    'size_t': 'usize',
-                    'std::size_t': 'usize',
-                    'char': 'i8',  # Assuming signed char in C++
-                    'unsigned char': 'u8',
-                    'short': 'i16',
-                    'unsigned short': 'u16',
-                    'bool': 'bool',
-                    'std::string': 'String',  # Note: Requires handling conversion between C++ strings and Rust strings
-                    # Add more mappings as needed
-                }
-            return type_mapping.get(value, value)
-        
-        def filter_element_count(ctype, extension) -> int:
-            match = re.search(r'\d+', ctype)
-            if match:
-                number = int(match.group())
-                dict = {
-                    'scalar': number,
-                    'sse': 128,
-                    'avx2': 256,
-                    'avx512': 512
-                }
-                return (int)(dict.get(extension) / number)
-            else:
-                return 0
 
         # C++ Bridge file generation
         for primitive_class in primitive_class_set:
@@ -197,7 +149,7 @@ class TSLFileGenerator:
             
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
             for primitive in primitive_class:
-                # C++ declaration file
+                # C++ Bridge declaration
                 declaration_data = copy.deepcopy(primitive.declaration.data)
                 declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
                     declaration_data)
@@ -206,7 +158,7 @@ class TSLFileGenerator:
                     definition_copy = copy.deepcopy(definition.data)
                     for ctype, additional_simd_template_base_type in definition.types:
                         definition_copy["ctype"] = ctype
-                        definition_copy["element_count"] = filter_element_count((str)(ctype_filter(ctype)), definition.target_extension)
+                        definition_copy["element_count"] = filter_element_count((str)(filter_ctype_rust(ctype)), definition.target_extension)
                         decl_and_def_combined_data = { **extension_set.get_extension_by_name(
                             definition.target_extension).data, **declaration_data, **definition_copy }
                         declaration_file.add_code(
@@ -235,6 +187,12 @@ class TSLFileGenerator:
                         decl_and_def_combined_data["implementation"] = config.create_template(
                             definition_copy["implementation"]).render(
                             decl_and_def_combined_data)
+                        # TEMP. ANPASSEN:
+                        for param in decl_and_def_combined_data["parameters"]:
+                            if "base_type" in param["ctype"]:
+                                param["arr_length"] = 1
+                            else:
+                                param["arr_length"] = filter_element_count(filter_ctype_rust(ctype), decl_and_def_combined_data["target_extension"])
                         definition_file.add_code(
                             config.get_template("rust::bridge_definiton").render(decl_and_def_combined_data))
                         self.log(logging.INFO,
@@ -252,7 +210,7 @@ class TSLFileGenerator:
                 primitive_class.file_name).joinpath(primitive_class.name).with_suffix(
                 config.get_config_entry("rust_extension"))
             declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
-                                                                             primitive_class.data)
+                                                                             primitive_class.data, "rust")
 
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
         
@@ -274,14 +232,16 @@ class TSLFileGenerator:
                             config.get_config_entry("rust_extension"))
                         definition_files_per_extension_dict[
                             definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
-                                                                                          primitive_class.data)
+                                                                                          primitive_class.data, "rust")
                     definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
 
                     definition_copy = copy.deepcopy(definition.data)
                     for ctype, additional_simd_template_base_type in definition.types:
+                        ctype_rust = filter_ctype_rust(ctype)
                         definition_copy["ctype"] = ctype
+                        definition_copy["ctype_rust"] = ctype_rust
                         definition_copy["additional_simd_template_base_type"] = additional_simd_template_base_type
-                        definition_copy["element_count"] = filter_element_count((str)(ctype_filter(ctype)), definition.target_extension)
+                        definition_copy["element_count"] = filter_element_count(ctype_rust, definition.target_extension)
                         
                         decl_and_def_combined_data = { **extension_set.get_extension_by_name(
                             definition.target_extension).data, **declaration_data, **definition_copy }

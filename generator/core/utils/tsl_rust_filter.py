@@ -1,4 +1,5 @@
 import re
+import math
 
 def filter_ctype_rust(ctype):
    # Dictionary mapping C data types to Rust data types
@@ -43,40 +44,22 @@ def filter_reg_rust(return_type, ctype, element_count):
     else:
         return return_type
 
-def filter_reg_cpp(ctype, target_extension, register_type):
-    # Temporary. Find fix
-    ctype_rust = filter_ctype_rust(ctype)
-    if "register_type" in register_type:
-        result = '__m'
-        type_mapping = {
-            'scalar': ctype_rust,
-            'sse': 128,
-            'avx2': 256,
-            'avx512': 512
-        }
-        if type_mapping.get(target_extension) == ctype_rust:
-            return ctype_rust
-        else:
-            result += (str)(type_mapping.get(target_extension))
-            if ctype_rust[0] == 'i' or ctype_rust[0] == 'u':
-                result += 'i'
-            elif 'f64' == ctype_rust:
-                result += 'd'
+def filter_reg_cpp(ctype, size_in_bits, register_type):
+    if  size_in_bits != 1 and "register_type" in register_type:
+        result = f'__m{size_in_bits}'
+        if "int" in ctype:
+            result += 'i'
+        elif 'double' == ctype:
+            result += 'd'
         return result
     else:
         return ctype
     
-def filter_element_count(ctype, target_extension) -> int:
+def filter_element_count(ctype, size_in_bits) -> int:
     match = re.search(r'\d+', ctype)
     if match:
         number = int(match.group())
-        dict = {
-            'scalar': number,
-            'sse': 128,
-            'avx2': 256,
-            'avx512': 512
-        }
-        return (int)(dict.get(target_extension) / number)
+        return (int)(math.ceil(size_in_bits / number))
     else:
         return 0
 
@@ -84,4 +67,5 @@ def filter_implementation(text, replace_message):
     pattern = r'return (.*);'
 
     replacement = f'auto return_rs = \\1;\n\treturn {replace_message}(&return_rs);'
-    return re.sub(pattern, replacement, text)
+    changed_text = re.sub(pattern, replacement, text)
+    return changed_text

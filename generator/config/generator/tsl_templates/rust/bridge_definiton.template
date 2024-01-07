@@ -16,6 +16,7 @@
    has_parameters_tuple=True,
    using_return_type='',
    return_template_type='',
+   return_type = '',
    additional_templates='',
    additional_template_params='',
    additional_target_extension='',
@@ -27,8 +28,9 @@
    {% set ns.simd_register_length = ', ' ~ vector_length_bits %}
    {% set ns.full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns.simd_register_length~ '>' %}
 {% else %}
-   {% set ns.simd_register_length = '' ~ ctype | filter_ctype_rust | filter_element_count (target_extension) %}
+   {% set ns.simd_register_length = ctype | filter_ctype_rust | filter_element_count (simdT_default_size_in_bits) %}
    {% set ns.full_extension_name = ctype | filter_ctype_rust ~ ', ' ~ target_extension %}
+   {% set ns.return_type = 'std::array<' ~ ctype ~ ',' ~ ns.simd_register_length ~ '>'%}
 {% endif %}
 {% if ctype == 'T' %}
 {% set ns.partial_specialized = True %}
@@ -94,11 +96,12 @@
     * @note: {{ specialization_comment }}
     {% endif %}
 */
-std::array<{{ctype}}, {{ns.simd_register_length}}> {{ functor_name }}_{{target_extension}}_{{ctype | filter_ctype_rust}}({{ns.full_qualified_parameters_str}}){
+{{ns.return_type}} {{ functor_name }}_{{target_extension}}_{{ctype | filter_ctype_rust}}({{ns.full_qualified_parameters_str}}){
+    using Vec = simd<{{ctype}}, {{target_extension}}>;
     {% for param in parameters %}
-    const {{ctype | filter_reg_cpp(target_extension, param['ctype'])}}* {{param['name']}}_ptr = reinterpret_cast<const {{ctype | filter_reg_cpp(target_extension, param['ctype'])}}*>({{param['name']}}_data.data());
-    {{ctype | filter_reg_cpp(target_extension, param['ctype'])}} {{param['name']}} = *{{param['name']}}_ptr;
+    const {{ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype'])}}* {{param['name']}}_ptr = reinterpret_cast<const {{ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype'])}}*>({{param['name']}}_data.data());
+    {{ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype'])}} {{param['name']}} = *{{param['name']}}_ptr;
     {% endfor %}
 
-    {{ implementation | filter_implementation('*reinterpret_cast<std::array<' ~ ctype ~ ', ' ~ ns.simd_register_length ~ '>*>') }}
+    {{ implementation | filter_implementation('*reinterpret_cast<' ~ ns.return_type ~ '*>') }}
 } // end of {{ functor_name }} for {{ target_extension }} using {{ ctype }}.

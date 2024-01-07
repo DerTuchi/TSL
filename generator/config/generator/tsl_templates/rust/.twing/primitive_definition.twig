@@ -1,0 +1,122 @@
+{% macro abort(error) %}
+    {{ None['[ERROR] ' ~ error][0] }}
+{% endmacro %}
+{% set ns_full_extension_name = '' %}
+{% set ns_partial_specialized = false %}
+{% set ns_contains_template_parameter = false %}
+{% set ns_contains_parameter_pack = false %}
+{% set ns_parameter_pack_typenames_str = '' %}
+{% set ns_full_qualified_parameters_str = '' %}
+{% set ns_full_qualified_parameters_str_bridge = '' %}
+{% set ns_parameters_str = '' %}
+{% set ns_parameters_types = '' %}
+{% set ns_has_parameters_tuple = true %}
+{% set ns_using_return_type = '' %}
+{% set ns_return_template_type = '' %}
+{% set ns_additional_templates = '' %}
+{% set ns_additional_template_params = '' %}
+{% set ns_additional_target_extension = '' %}
+{% set ns_simd_register_length = '' %}
+
+{% if vector_length_agnostic and vector_length_bits != 0 %}
+{% include '_self' %}
+{{ _self.abort("A specialization can be either vector length agnostig or have a vector-length-dependent specialization.") }}
+{% endif %}
+
+{% if vector_length_agnostic %}
+   {% set ns_simd_register_length = ', VectorSize' %}
+   {% set ns_full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns_simd_register_length ~ '>' %}
+{% elseif vector_length_bits != 0 %}
+   {% set ns_simd_register_length = ', ' ~ vector_length_bits %}
+   {% set ns_full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns_simd_register_length~ '>' %}
+{% else %}
+   {% set ns_simd_register_length = '' %}
+   {% set ns_full_extension_name = ctype_rust ~ ', ' ~ target_extension %}
+{% endif %}
+{% if ctype == 'T' %}
+{% set ns_partial_specialized = true %}
+{% endif %}
+{% for param in parameters %}
+   {% if not loop.last %}
+      {% set comma = ', ' %}
+   {% else %}
+      {% set comma = '' %}
+   {% endif %}
+   {% if 'is_parameter_pack' in param and param['is_parameter_pack'] %}
+      {% set ns_contains_parameter_pack = true %}
+      {% set ns_parameter_pack_typenames_str = ns_parameter_pack_typenames_str ~ 'typename... ' ~ param['ctype'] ~ comma %}
+      {% set ns_full_qualified_parameters_str = ns_full_qualified_parameters_str ~ param['ctype'] ~ '... ' ~ param['name'] ~ comma %}
+      {% set ns_parameters_str = ns_parameters_str ~ param['name'] ~ '...' ~ comma %}
+      {% set ns_parameters_types = ns_parameters_types ~ param['ctype'] ~ '... ' ~ comma %}
+      {% set ns_has_parameters_tuple = false %}
+   {% else %}
+      {% if 'declaration_attributes' not in param or param['declaration_attributes'] == "" %}
+      {% set decl_attribs = '' %}
+      {% else %}
+      {% set decl_attribs = param['declaration_attributes'] ~ ' ' %}
+      {% endif %}
+      {% if 'attributes' not in param or param['attributes'] == "" %}
+      {% set attribs = ' ' %}
+      {% else %}
+      {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
+      {% endif %}
+      {% set ns_full_qualified_parameters_str = ns_full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype_rust | filter_reg_cpp(target_extension, param['ctype'])  ~ comma %}
+      {% set ns_full_qualified_parameters_str_bridge = ns_full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
+      {% set ns_parameters_str = ns_parameters_str ~ param['name'] ~ comma %}
+      {% set ns_parameters_types = ns_parameters_types ~ param['ctype'] ~ comma %}
+   {% endif %}
+{% endfor %}
+{% if additional_simd_template_parameter["name"] != "" %}
+    {% if additional_simd_template_extension != "" %}
+        {% set ns_additional_target_extension = additional_simd_template_extension %}
+    {% else %}
+        {% set ns_additional_target_extension = target_extension %}
+    {% endif %}
+    {% set ns_using_return_type = 'using ' ~ additional_simd_template_parameter["name"] ~ ' = simd<' ~ additional_simd_template_base_type ~ ', ' ~ ns_additional_target_extension ~ ns_simd_register_length ~ '>;' %}
+    {% set ns_return_template_type = 'simd<' ~ additional_simd_template_base_type ~ ', ' ~ ns_additional_target_extension ~ ns_simd_register_length ~ '>, ' %}
+{% endif %}
+{% if additional_non_specialized_template_parameters is not empty %}
+{% for parameter_dict in additional_non_specialized_template_parameters %}
+{% set loop_comma = (loop.first) ? '' : ', ' %}
+{% set ns_additional_templates = ns_additional_templates ~ loop_comma ~ parameter_dict["ctype"] ~ ' ' ~ parameter_dict["name"] %}
+{% set ns_additional_template_params = ns_additional_template_params ~ loop_comma ~ parameter_dict["name"] %}
+{% endfor %}
+{% set ns_additional_templates = ns_additional_templates ~ ", " %}
+{% set ns_additional_template_params = ns_additional_template_params ~ ", " %}
+{% endif %}
+{# Every implementation is in the (nested) namespace "details" #}
+impl {{ functor_name }}<{{ ns_full_extension_name }}> {
+    /**
+     * @brief: Template specialization of implementation for "{{ functor_name }}" (primitive {{ primitive_name }}).
+     * @details:
+     * Target Extension: {{ target_extension }}.
+     *        Data Type: {{ ctype_rust }}
+     *  Extension Flags: {{ lscpu_flags }}
+     {% if yaml_origin_line and yaml_origin_file %}
+     *      Yaml Source: {{ yaml_origin_file }}::{{ yaml_origin_line }}
+     {% endif %}
+     {% if specialization_comment != "" %}
+     * @note: {{ specialization_comment }}
+     {% endif %}
+     */
+    pub fn parameters_queryable() -> bool{
+        return {{ (ns_has_parameters_tuple) ? 'true' : 'false' }};
+    }
+    pub fn has_return_value() -> bool {
+        return {{ (returns['ctype'] != 'void') ? 'true' : 'false' }};
+    }
+    pub fn native_supported() -> bool {
+{# If there is hardware support this function returns true, false otherwise. #}
+        return {{ (is_native) ? 'true;' : 'false;' }}
+    }
+
+    {{ (returns['ctype'] != 'void') ? '#[must_use] ' : '' }}{{ (is_native) ? '' : '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
+    {{ (force_inline) ? '#[inline(always)]' : '' }}
+    pub fn apply({{ ns_full_qualified_parameters_str }}) -> {{ctype_rust | filter_reg_cpp(target_extension, returns['ctype'])}}{
+        {% for param in parameters %}
+        let {{param['name']}}_arr: [{{ctype_rust}} ; {{element_count}}] = unsafe {std::mem::transmute({{param['name']}})};
+        {% endfor %}
+        let result = ffi::{{functor_name}}_{{target_extension}}_{{ctype_rust}}({{ns_full_qualified_parameters_str_bridge}});
+        unsafe {std::mem::transmute(result)}
+    }
+} // end of struct {{ functor_name }} for template specialization of {{ functor_name }} for {{ target_extension }} using {{ ctype }}.

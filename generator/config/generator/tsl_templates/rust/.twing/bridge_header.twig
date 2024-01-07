@@ -1,0 +1,10 @@
+
+#[cxx::bridge]
+mod ffi {
+    unsafe extern "C++" {
+        include!("{{file_name}}.h");
+        {% for code in codes %}
+        {{ code }}
+        {% endfor %}
+    }
+}

@@ -158,9 +158,9 @@ class TSLFileGenerator:
                     definition_copy = copy.deepcopy(definition.data)
                     for ctype, additional_simd_template_base_type in definition.types:
                         definition_copy["ctype"] = ctype
-                        definition_copy["element_count"] = filter_element_count((str)(filter_ctype_rust(ctype)), definition.target_extension)
                         decl_and_def_combined_data = { **extension_set.get_extension_by_name(
                             definition.target_extension).data, **declaration_data, **definition_copy }
+                        decl_and_def_combined_data["element_count"] = filter_element_count(filter_ctype_rust(ctype), decl_and_def_combined_data["simdT_default_size_in_bits"])
                         declaration_file.add_code(
                             config.get_template("rust::bridge_declaration").render(decl_and_def_combined_data))
                         
@@ -192,12 +192,19 @@ class TSLFileGenerator:
                             if "base_type" in param["ctype"]:
                                 param["arr_length"] = 1
                             else:
-                                param["arr_length"] = filter_element_count(filter_ctype_rust(ctype), decl_and_def_combined_data["target_extension"])
+                                param["arr_length"] = filter_element_count(filter_ctype_rust(ctype), decl_and_def_combined_data["simdT_default_size_in_bits"])
                         definition_file.add_code(
                             config.get_template("rust::bridge_definiton").render(decl_and_def_combined_data))
                         self.log(logging.INFO,
                                  f"Created template specialization for {primitive.declaration.name} (details::{primitive.declaration.name}_impl<simd<{ctype}, {definition.target_extension}>>)")
                     
+                    definition_file.add_predefined_tsl_file_include('"../../../../static/tsl_static.h"')
+                    # temp ---
+                    if definition.target_extension != "scalar":
+                        definition_file.add_predefined_tsl_file_include(f'"../../extensions/simd/intel/{definition.target_extension}.h"')
+                    else:
+                        definition_file.add_predefined_tsl_file_include('"../../extensions/scalar"')
+                    # ---    
                     definition_file.import_includes(definition.data)
                     definition_file.add_file_include(declaration_file)
 
@@ -234,28 +241,32 @@ class TSLFileGenerator:
                             definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
                                                                                           primitive_class.data, "rust")
                     definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
-
+                    
                     definition_copy = copy.deepcopy(definition.data)
                     for ctype, additional_simd_template_base_type in definition.types:
                         ctype_rust = filter_ctype_rust(ctype)
                         definition_copy["ctype"] = ctype
                         definition_copy["ctype_rust"] = ctype_rust
                         definition_copy["additional_simd_template_base_type"] = additional_simd_template_base_type
-                        definition_copy["element_count"] = filter_element_count(ctype_rust, definition.target_extension)
-                        
                         decl_and_def_combined_data = { **extension_set.get_extension_by_name(
                             definition.target_extension).data, **declaration_data, **definition_copy }
+                        decl_and_def_combined_data["element_count"] = filter_element_count(ctype_rust, decl_and_def_combined_data["simdT_default_size_in_bits"])
                         decl_and_def_combined_data["implementation"] = config.create_template(
                             definition_copy["implementation"]).render(
                             decl_and_def_combined_data)
-                        
+                        # temp. ----
+                        for param in decl_and_def_combined_data["parameters"]:
+                            if "base_type" in param["ctype"]:
+                                param["arr_length"] = 1
+                            else:
+                                param["arr_length"] = filter_element_count(filter_ctype_rust(ctype), decl_and_def_combined_data["simdT_default_size_in_bits"])
+                        # ----
                         codes[definition.target_extension].append(config.get_template("rust::bridge_helper").render(decl_and_def_combined_data))
                         definition_file.add_code(
                             config.get_template("rust::primitive_definition").render(decl_and_def_combined_data))
                         self.log(logging.INFO,
                                  f"Created template specialization for {primitive.declaration.name} (details::{primitive.declaration.name}_impl<simd<{ctype}, {definition.target_extension}>>)")
-                        
-                    definition_file.import_includes(definition.data)
+                    
                     definition_file.add_file_include(declaration_file)
             
             # Bridge Module
@@ -306,8 +317,10 @@ class TSLFileGenerator:
         self.__primitive_class_declarations: List[TSLHeaderFile] = []
         self.__primitive_class_definitions: List[TSLHeaderFile] = []
 
-        # self.__create_extension_header_files(lib.extension_set)
-        # self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+        self.__create_extension_header_files(lib.extension_set)
+        self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+
+        #Rust generation
         self.__create_primitive_header_files_rust(lib.extension_set, lib.primitive_class_set)
 
         self.__create_static_header_files()

@@ -201,9 +201,9 @@ class TSLFileGenerator:
                     definition_file.add_predefined_tsl_file_include('"../../../../static/tsl_static.h"')
                     # temp ---
                     if definition.target_extension != "scalar":
-                        definition_file.add_predefined_tsl_file_include(f'"../../extensions/simd/intel/{definition.target_extension}.h"')
+                        definition_file.add_predefined_tsl_file_include(f'"../../../extensions/simd/intel/{definition.target_extension}.h"')
                     else:
-                        definition_file.add_predefined_tsl_file_include('"../../extensions/scalar"')
+                        definition_file.add_predefined_tsl_file_include('"../../../extensions/scalar.h"')
                     # ---    
                     definition_file.import_includes(definition.data)
                     definition_file.add_file_include(declaration_file)
@@ -317,11 +317,14 @@ class TSLFileGenerator:
         self.__primitive_class_declarations: List[TSLHeaderFile] = []
         self.__primitive_class_definitions: List[TSLHeaderFile] = []
 
+        
         self.__create_extension_header_files(lib.extension_set)
+
+        # Cpp generation
         self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
 
-        #Rust generation
-        self.__create_primitive_header_files_rust(lib.extension_set, lib.primitive_class_set)
+        # Rust generation
+        # self.__create_primitive_header_files_rust(lib.extension_set, lib.primitive_class_set)
 
         self.__create_static_header_files()
         # dep_graph = TSLDependencyGraph(lib)

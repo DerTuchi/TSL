@@ -27,6 +27,7 @@ set(OLD_GLOB
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/bridge_definiton.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/bridge_header.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/bridge_helper.template"
+  "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/header_file.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/primitive_declaration.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/primitive_definition.template"
   )

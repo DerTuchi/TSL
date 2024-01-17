@@ -60,7 +60,7 @@
       {% else %}
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
-      {% set ns_full_qualified_parameters_str = ns_full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype_rust | filter_reg_cpp(target_extension, param['ctype'])  ~ comma %}
+      {% set ns_full_qualified_parameters_str = ns_full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype']) | filter_ctype_rust  ~ comma %}
       {% set ns_full_qualified_parameters_str_bridge = ns_full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
       {% set ns_parameters_str = ns_parameters_str ~ param['name'] ~ comma %}
       {% set ns_parameters_types = ns_parameters_types ~ param['ctype'] ~ comma %}
@@ -112,9 +112,9 @@ impl {{ functor_name }}<{{ ns_full_extension_name }}> {
 
     {{ (returns['ctype'] != 'void') ? '#[must_use] ' : '' }}{{ (is_native) ? '' : '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
     {{ (force_inline) ? '#[inline(always)]' : '' }}
-    pub fn apply({{ ns_full_qualified_parameters_str }}) -> {{ctype_rust | filter_reg_cpp(target_extension, returns['ctype'])}}{
+    pub fn apply({{ ns_full_qualified_parameters_str }}) -> {{ctype | filter_reg_cpp(simdT_default_size_in_bits, returns['ctype']) | filter_ctype_rust}}{
         {% for param in parameters %}
-        let {{param['name']}}_arr: [{{ctype_rust}} ; {{element_count}}] = unsafe {std::mem::transmute({{param['name']}})};
+        let {{param['name']}}_arr: [{{ctype_rust}} ; {{param['arr_length']}}] = unsafe {std::mem::transmute({{param['name']}})};
         {% endfor %}
         let result = ffi::{{functor_name}}_{{target_extension}}_{{ctype_rust}}({{ns_full_qualified_parameters_str_bridge}});
         unsafe {std::mem::transmute(result)}

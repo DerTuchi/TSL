@@ -1,12 +1,12 @@
 ---
 file_description: "Internal static header which includes all static headers."
 includes:
-    - '"utils/preprocessor.h"'
-    - '"utils/type_helper.h"'
-    - '"utils/type_concepts.h"'
-    - '"utils/functional.h"'
-    - '"simd/simd_type_concepts.h"'
-    - '"simd/simd_type.h"'
-    - '"simd/simd_primitive_concepts.h"'
-    - '"utils/runtime.h"'
+    - '"utils/preprocessor.hpp"'
+    - '"utils/type_helper.hpp"'
+    - '"utils/type_concepts.hpp"'
+    - '"utils/functional.hpp"'
+    - '"simd/simd_type_concepts.hpp"'
+    - '"simd/simd_type.hpp"'
+    - '"simd/simd_primitive_concepts.hpp"'
+    - '"utils/runtime.hpp"'
 ...

@@ -1,10 +1,10 @@
 ---
 configuration:
-   target_language:               "core"
+   target_language:               "rust"
    namespace:                     "tsl"
    tsl_implementation_namespace:  "functors"
-   header_file_extension:         ".h"
-   source_file_extension:         ".cpp"
+   header_file_extension:         ".rs"
+   source_file_extension:         ".rs"
    rust_extension:                ".rs"
    root_path:                     "./generated_tsl"
    compiler_architecture_prefix:  "-m"
@@ -61,7 +61,7 @@ configuration_files:
       extensions_path:            "extensions"
       primitives_path:            "primitives"
    static_files:
-      root_path:                  "generator/static_files"
+      root_path:                  "generator/static_files_rust"
       lib:                        "core"
    supplementary:
       root_path:                  "supplementary"

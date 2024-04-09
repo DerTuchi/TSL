@@ -72,8 +72,8 @@ class TSLFileGenerator:
         for extension in extension_set:
             file_path: Path = config.get_generation_path("extensions").joinpath(extension.file_name).joinpath(
                 extension.name).with_suffix(config.get_config_entry("header_file_extension"))
-            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, extension.data)
-            tsl_file.add_code(config.get_template("core::extension").render(extension.data))
+            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, extension.data, config.get_config_entry("target_language"))
+            tsl_file.add_code(config.get_template(str(config.get_config_entry("target_language")) + "::extension").render(extension.data))
             self.log(logging.INFO,
                      f"Created struct for hardware extension {extension.name}.")
             tsl_file.import_includes(extension.data)
@@ -294,7 +294,7 @@ class TSLFileGenerator:
                     static_file_name).with_suffix(config.get_config_entry("header_file_extension"))
 
             data_dict: YamlDataType = yaml_load(static_yaml_file_path)
-            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, data_dict)
+            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, data_dict, config.get_config_entry("target_language"))
             if "implementations" in data_dict:
                 for implementation in data_dict["implementations"]:
                     tsl_file.add_code_to_be_rendered(implementation)
@@ -321,12 +321,12 @@ class TSLFileGenerator:
         self.__create_extension_header_files(lib.extension_set)
 
         # Cpp generation
-        self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+        # self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+        self.__create_static_header_files()
 
         # Rust generation
         # self.__create_primitive_header_files_rust(lib.extension_set, lib.primitive_class_set)
 
-        self.__create_static_header_files()
         # dep_graph = TSLDependencyGraph(lib)
         # print("Checking implementation dependencies:")
         # ordered_primitive_classes = list(dep_graph.sort_tsl_classes("get_implementations"))

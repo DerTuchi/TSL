@@ -1,0 +1,98 @@
+{% set ns = namespace(
+   default_vector_size=0) %}
+{% if simdT_default_size_in_bits == 0 %}
+   {% set ns.default_vector_size = "sizeof(BaseType)*8" %}  //TODO
+{% else %}
+   {% set ns.default_vector_size = simdT_default_size_in_bits %}
+{% endif %}
+// Trait to select {{ extension_name }} register_type
+pub trait SelectRegister{{ extension_name }} {
+    type Output;
+}
+macro_rules! impl_register_{{extension_name}} {
+    ($($val:ty => $reg:ty),*) => {
+        $(impl SelectRegister{{extension_name}} for $val {
+            type Output = $reg;
+        })*
+    };
+}
+impl_register_{{extension_name}}!{
+    i8 => __m128i, i16 => __m128i, i32 => __m128i, i64 => __m128i, isize => __m128i,
+    u8 => __m128i, u16 => __m128i, u32 => __m128i, u64 => __m128i, usize => __m128i,
+    f32 => __m128, f64 => __m128d   //TODO
+}
+
+// Trait to select Imask Type
+pub trait SelectImask{{extension_name}}{
+    type Output;
+}
+
+macro_rules! impl_imask_{{extension_name}} {
+    ($($val1:ty),*; $($val2:ty),*) => {
+        $(
+            impl SelectImask{{ extension_name }} for $val1 {
+                type Output = u16;
+            }
+        )*
+        $(
+            impl SelectImask{{ extension_name }} for $val2{
+                type Output = u8;
+            }
+        )*
+    };
+}
+
+impl_imask_{{ extension_name }}!{
+    u8, i8; 
+    u16, i16, u32, i32, u64, i64, f32, f64  //TODO
+}
+
+pub struct {{ extension_name }}<T: TSLArithmetic>(pub PhantomData<T>);
+impl<T> {{ extension_name }}<T> 
+where
+    T : TSLArithmetic + SelectRegister{{ extension_name }} + SelectImask{{ extension_name }} + SelectOffsetBaseType,
+        <T as SelectOffsetBaseType>::Output: SelectRegister{{ extension_name }}
+{
+    const DEFAULT_SIZE_IN_BITS : usize = {{ns.default_vector_size}};
+
+    pub fn new() -> Self {
+        {{ extension_name }}(PhantomData)
+    }
+    
+    pub const fn vector_size_b(&self) -> usize{
+        Self::DEFAULT_SIZE_IN_BITS
+    }
+    pub const fn vector_size_B(&self) -> usize{
+        self.vector_element_count() * std::mem::size_of::<T>()
+    }
+    pub const fn vector_element_count(&self) -> usize{
+        self.vector_size_b() / (std::mem::size_of::<T>() * 8)
+    }
+    pub const fn vector_alignment(&self) -> usize {
+        if self.vector_size_B() > 32 {
+            64
+        } else {
+            self.vector_size_B()
+        }
+    }
+    pub const fn vector_mask_ratio(&self) -> usize {
+        (std::mem::size_of::<<Self as TargetExtension>::MaskType>() * 8) / self.vector_element_count()
+    }
+    pub const fn mask_shift(&self) -> usize {
+        self.vector_element_count()
+    }
+}
+
+impl<T> TargetExtension for {{ extension_name }}<T>
+where
+    T : TSLArithmetic + SelectRegister{{ extension_name }} + SelectImask{{ extension_name }} + SelectOffsetBaseType,
+        <T as SelectOffsetBaseType>::Output: SelectRegister{{ extension_name }}
+{
+    const DEFAULT_SIZE_IN_BITS : usize = Self::DEFAULT_SIZE_IN_BITS;
+    type BaseType = T;
+    type RegisterType = <T as SelectRegister{{ extension_name }}>::Output;   // needs to be like that because no attributes are available in Rust
+    type MaskType = Self::RegisterType;
+    type ImaskType = <T as SelectImask{{ extension_name }}>::Output; // needs to be like that because no attributes are available in Rust
+    type OffsetBaseType = <T as SelectOffsetBaseType>::Output;
+    type OffsetBaseRegisterType = <Self::OffsetBaseType as SelectRegister{{ extension_name }}>::Output;
+}

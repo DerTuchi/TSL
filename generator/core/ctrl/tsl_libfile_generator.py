@@ -320,7 +320,7 @@ class TSLFileGenerator:
         
         self.__create_extension_header_files(lib.extension_set)
 
-        #  Cpp generation
+        # Cpp generation
         self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
 
         # Rust generation

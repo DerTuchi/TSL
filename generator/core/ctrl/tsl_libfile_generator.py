@@ -72,7 +72,7 @@ class TSLFileGenerator:
         for extension in extension_set:
             file_path: Path = config.get_generation_path("extensions").joinpath(extension.file_name).joinpath(
                 extension.name).with_suffix(config.get_config_entry("header_file_extension"))
-            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, extension.data, config.get_config_entry("target_language"))
+            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, extension.data)
             tsl_file.add_code(config.get_template(str(config.get_config_entry("target_language")) + "::extension").render(extension.data))
             self.log(logging.INFO,
                      f"Created struct for hardware extension {extension.name}.")
@@ -87,8 +87,7 @@ class TSLFileGenerator:
                 primitive_class.file_name).joinpath(primitive_class.name).with_suffix(
                 config.get_config_entry("header_file_extension"))
             declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
-                                                                             primitive_class.data, config.get_config_entry("target_language"))
-
+                                                                             primitive_class.data)
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
             for primitive in primitive_class:
                 declaration_data = copy.deepcopy(primitive.declaration.data)
@@ -108,9 +107,8 @@ class TSLFileGenerator:
                             config.get_config_entry("header_file_extension"))
                         definition_files_per_extension_dict[
                             definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
-                                                                                          primitive_class.data, config.get_config_entry("target_language"))
+                                                                                          primitive_class.data)
                     definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
-
                     # print(definition)
 
                     definition_copy = copy.deepcopy(definition.data)
@@ -148,7 +146,7 @@ class TSLFileGenerator:
                     static_file_name).with_suffix(config.get_config_entry("header_file_extension"))
             
             data_dict: YamlDataType = yaml_load(static_yaml_file_path)
-            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, data_dict, config.get_config_entry("target_language"))
+            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, data_dict)
             if "implementations" in data_dict:
                 for implementation in data_dict["implementations"]:
                     tsl_file.add_code_to_be_rendered(implementation)

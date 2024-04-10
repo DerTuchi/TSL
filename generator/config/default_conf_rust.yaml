@@ -5,12 +5,12 @@ configuration:
    tsl_implementation_namespace:  "functors"
    header_file_extension:         ".rs"
    source_file_extension:         ".rs"
-   rust_extension:                ".rs"
    root_path:                     "./generated_tsl"
    compiler_architecture_prefix:  "-m"
    use_concepts:                  True
    emit_workaround_warnings:      True
    relevant_types:                 ["uint8_t", "int8_t", "uint16_t", "int16_t", "uint32_t", "int32_t", "uint64_t", "int64_t", "float", "double"]
+   # relevant_types:                 ["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "f32", "f64"]
    always_required_primitives:     ["allocate","deallocate","allocate_aligned","memory_cp","set"]
    library:
       root_path:                  "include"

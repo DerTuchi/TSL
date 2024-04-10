@@ -91,7 +91,7 @@ class TSLHeaderFile:
 
     @staticmethod
     @requirement(filename="NotNone", data_dict="NotNone")
-    def create_from_dict(filename: Path, data_dict: YamlDataType, target_language = "core") -> TSLHeaderFile:
+    def create_from_dict(filename: Path, data_dict: YamlDataType) -> TSLHeaderFile:
         new_data_dict: YamlDataType = {
             # "file_name": filename,
             "year": datetime.date.today().year,
@@ -107,7 +107,7 @@ class TSLHeaderFile:
             "tsl_file_includes": [],
             "includes": [],
             "codes": [],
-            "target_language": target_language
+            "target_language": config.get_config_entry("target_language")
         }
         return TSLHeaderFile(filename, {**new_data_dict, **data_dict})
 

@@ -1,0 +1,82 @@
+-- Found python at /usr/bin/python3.10
+-- lscpu flags: 3dnowprefetch abm adx aes apic arch_capabilities arch_perfmon avx avx2 bmi1 bmi2 clflush clflushopt cmov constant_tsc cpuid cx16 cx8 de erms f16c flush_l1d fma fpu fsgsbase fxsr ht hypervisor ibpb ibrs invpcid invpcid_single lahf_lm lm mca mce md_clear mmx movbe msr mtrr nopl nx osxsave pae pat pcid pclmulqdq pdcm pdpe1gb pge pni popcnt pse pse36 rdrand rdrnd rdseed rdtscp rep_good sep smap smep ss ssbd sse sse2 sse4_1 sse4_2 ssse3 stibp syscall tsc vme xgetbv1 xsave xsavec xsaveopt xsaves xtopology
+-- === SUMMARY: TSL Generation ===
+-- Script path      : /home/dertuchi/TSL/main.py
+-- Generation path  : /home/dertuchi/TSL/generated_tsl/generator_output
+-- Switches         : 
+--    --targets;3dnowprefetch;abm;adx;aes;apic;arch_capabilities;arch_perfmon;avx;avx2;bmi1;bmi2;clflush;clflushopt;cmov;constant_tsc;cpuid;cx16;cx8;de;erms;f16c;flush_l1d;fma;fpu;fsgsbase;fxsr;ht;hypervisor;ibpb;ibrs;invpcid;invpcid_single;lahf_lm;lm;mca;mce;md_clear;mmx;movbe;msr;mtrr;nopl;nx;osxsave;pae;pat;pcid;pclmulqdq;pdcm;pdpe1gb;pge;pni;popcnt;pse;pse36;rdrand;rdrnd;rdseed;rdtscp;rep_good;sep;smap;smep;ss;ssbd;sse;sse2;sse4_1;sse4_2;ssse3;stibp;syscall;tsc;vme;xgetbv1;xsave;xsavec;xsaveopt;xsaves;xtopology
+--    all primitives
+--    all types
+-- Generator Options: --no-workaround-warnings;--testing;--no-draw-test-dependencies;--no-concepts
+-- Target Options   : 
+-- ===============================
+-- Running TSL Generator...
+-- Executing command: /usr/bin/python3.10 /home/dertuchi/TSL/main.py --no-workaround-warnings;--testing;--no-draw-test-dependencies;--no-concepts -o /home/dertuchi/TSL/generated_tsl/generator_output --targets;3dnowprefetch;abm;adx;aes;apic;arch_capabilities;arch_perfmon;avx;avx2;bmi1;bmi2;clflush;clflushopt;cmov;constant_tsc;cpuid;cx16;cx8;de;erms;f16c;flush_l1d;fma;fpu;fsgsbase;fxsr;ht;hypervisor;ibpb;ibrs;invpcid;invpcid_single;lahf_lm;lm;mca;mce;md_clear;mmx;movbe;msr;mtrr;nopl;nx;osxsave;pae;pat;pcid;pclmulqdq;pdcm;pdpe1gb;pge;pni;popcnt;pse;pse36;rdrand;rdrnd;rdseed;rdtscp;rep_good;sep;smap;smep;ss;ssbd;sse;sse2;sse4_1;sse4_2;ssse3;stibp;syscall;tsc;vme;xgetbv1;xsave;xsavec;xsaveopt;xsaves;xtopology  
+Generating for ['3dnowprefetch', 'abm', 'adx', 'aes', 'apic', 'arch_capabilities', 'arch_perfmon', 'avx', 'avx2', 'bmi1', 'bmi2', 'clflush', 'clflushopt', 'cmov', 'constant_tsc', 'cpuid', 'cx16', 'cx8', 'de', 'erms', 'f16c', 'flush_l1d', 'fma', 'fpu', 'fsgsbase', 'fxsr', 'ht', 'hypervisor', 'ibpb', 'ibrs', 'invpcid', 'invpcid_single', 'lahf_lm', 'lm', 'mca', 'mce', 'md_clear', 'mmx', 'movbe', 'msr', 'mtrr', 'nopl', 'nx', 'osxsave', 'pae', 'pat', 'pcid', 'pclmulqdq', 'pdcm', 'pdpe1gb', 'pge', 'pni', 'popcnt', 'pse', 'pse36', 'rdrand', 'rdrnd', 'rdseed', 'rdtscp', 'rep_good', 'sep', 'smap', 'smep', 'ss', 'ssbd', 'sse', 'sse2', 'sse4_1', 'sse4_2', 'ssse3', 'stibp', 'syscall', 'tsc', 'vme', 'xgetbv1', 'xsave', 'xsavec', 'xsaveopt', 'xsaves', 'xtopology', 'ANY']
+Sorting includes according to the following order: misc, ls, binary, io, compare, memory, convert, mask, calc
+Reading from /home/dertuchi/TSL/supplementary/runtime/cpu/include/tslCPUrt.hpp
+Writing to /home/dertuchi/TSL/generated_tsl/generator_output/supplementary/runtime/cpu/include/tslCPUrt.hpp
+TSL - Summary:
+  - # Primitive Classes:  9
+  - # Primitives:         82
+  - # Tests:              96
+  - Primitives w/ Tests:  58
+  - Primitives w/o Tests: 
+                          blend_add
+                          undefined
+                          mask_gather
+                          scatter
+                          mask_scatter
+                          load_convert_up
+                          to_ostream
+                          allocate
+                          allocate_aligned
+                          deallocate
+                          memory_cp
+                          to_mask
+                          imask_binary_not
+                          mask_binary_not
+                          mask_binary_and
+                          imask_binary_and
+                          mask_binary_or
+                          imask_binary_or
+                          mask_binary_xor
+                          imask_binary_xor
+                          integral_all_true
+                          integral_all_false
+                          load_mask
+                          reinterpret
+                          ==============================================================
+                          24
+  - Unsafe Tests:          
+                          blend::<default> -> to_mask::<MISSING>
+                          to_vector::<full_mask> -> to_mask::<MISSING>
+                          to_vector::<no_mask> -> to_mask::<MISSING>
+                          mask_add::<zero_mask> -> to_mask::<MISSING>
+                          mask_add::<all_one_mask> -> to_mask::<MISSING>
+                          imask_conflict_free::<default> -> integral_all_true::<MISSING>
+                          to_vector::<full_mask> -> integral_all_true::<MISSING>
+                          mask_add::<all_one_mask> -> integral_all_true::<MISSING>
+                          to_vector::<no_mask> -> integral_all_false::<MISSING>
+                          mask_add::<zero_mask> -> integral_all_false::<MISSING>
+                          ==============================================================
+                          6 (10 specific missing dependencies)
+  - Test Coverage:        70.73%
+  - Avg. Tests/Primitive: 1.17
+To use TSL, apply the following changes:
+   CMakeLists.txt (top-level):                 add_subdirectory(generator_output)
+                                               target_link_libraries(<target> tsl)
+   C++ Source/Header file which uses TSL:      #include <tslintrin.rs>
+General usage:
+   Using namespace declaration:                /*...*/ 
+   (we generally discourage this               using namespace tsl;
+    kind of usage)                             auto result = add<simd<uint64_t, sse>>(a, b);
+                                               /*...*/
+   Explicit usage:                             /*...*/ 
+                                               auto result = tsl::add<tsl::simd<uint64_t, tsl::sse>>(a, b);
+                                               /*...*/ 
+Generation needed 8.20 seconds.
+-- TSL Include Directory: /home/dertuchi/TSL/generated_tsl/generator_output/include
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/dertuchi/TSL/generated_tsl

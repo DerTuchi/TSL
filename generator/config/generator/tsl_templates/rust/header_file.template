@@ -2,15 +2,11 @@
 
 {% include 'core/doxygen_file.template' %}
 
-{% if includes_rust %}
-{% for include in includes_rust %}
-using {{ include }};
-{% endfor %}
-{% else %}
 {% for include in includes %}
-using {{ include }};
+use {{ include }};
 {% endfor %}
-{% endif %}
+use std::marker::PhantomData;
+use crate::static_files::simd_traits::TargetExtension;
 
 
 {% if codes %}

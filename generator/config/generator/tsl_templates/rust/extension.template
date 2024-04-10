@@ -9,6 +9,7 @@
 pub trait SelectRegister{{ extension_name }} {
     type Output;
 }
+{% if register_type_mapping %}
 macro_rules! impl_register_{{extension_name}} {
     ($($val:ty => $reg:ty),*) => {
         $(impl SelectRegister{{extension_name}} for $val {
@@ -17,35 +18,49 @@ macro_rules! impl_register_{{extension_name}} {
     };
 }
 impl_register_{{extension_name}}!{
-    i8 => __m128i, i16 => __m128i, i32 => __m128i, i64 => __m128i, isize => __m128i,
-    u8 => __m128i, u16 => __m128i, u32 => __m128i, u64 => __m128i, usize => __m128i,
-    f32 => __m128, f64 => __m128d   //TODO
+    {% for entry in register_type_mapping %}
+    {% if not loop.last %}
+        {% set comma = ', ' %}
+    {% else %}
+        {% set comma = '' %}
+    {% endif %}
+    {{ entry[0] }} => {{ entry[1] }}{{comma}}
+    {% endfor %}
 }
+{% else %}
+impl<T: TSLArithmetic> SelectRegister{{extension_name}} for T{
+    type Output = T;
+}
+{% endif %}
 
 // Trait to select Imask Type
 pub trait SelectImask{{extension_name}}{
     type Output;
 }
-
+{% if imask_mapping %}
 macro_rules! impl_imask_{{extension_name}} {
-    ($($val1:ty),*; $($val2:ty),*) => {
-        $(
-            impl SelectImask{{ extension_name }} for $val1 {
-                type Output = u16;
-            }
-        )*
-        $(
-            impl SelectImask{{ extension_name }} for $val2{
-                type Output = u8;
-            }
-        )*
+    ($($val:ty => $reg:ty),*) => {
+        $(impl SelectImask{{extension_name}} for $val {
+            type Output = $reg;
+        })*
     };
 }
 
 impl_imask_{{ extension_name }}!{
-    u8, i8; 
-    u16, i16, u32, i32, u64, i64, f32, f64  //TODO
+    {% for entry in imask_mapping %}
+    {% if not loop.last %}
+        {% set comma = ', ' %}
+    {% else %}
+        {% set comma = '' %}
+    {% endif %}
+     {{ entry[0] }} => {{ entry[1] }}{{comma}}
+    {% endfor %}
 }
+{% else %}
+impl<T: TSLArithmetic> SelectImask{{extension_name}} for T{
+    type Output = u8; // maybe use bool instead?
+}
+{% endif %}
 
 pub struct {{ extension_name }}<T: TSLArithmetic>(pub PhantomData<T>);
 impl<T> {{ extension_name }}<T> 
@@ -90,9 +105,17 @@ where
 {
     const DEFAULT_SIZE_IN_BITS : usize = Self::DEFAULT_SIZE_IN_BITS;
     type BaseType = T;
-    type RegisterType = <T as SelectRegister{{ extension_name }}>::Output;   // needs to be like that because no attributes are available in Rust
-    type MaskType = Self::RegisterType;
-    type ImaskType = <T as SelectImask{{ extension_name }}>::Output; // needs to be like that because no attributes are available in Rust
+    {% if register_type_rust %}
+    type RegisterType = {{ register_type_rust }};
+    {% else %}
+    type RegisterType = <T as SelectRegister{{ extension_name }}>::Output;
+    {% endif %}
+    {% if mask_type_rust %}
+    type MaskType = {{ mask_type_rust }};
+    {% else %}
+    type MaskType = {{ simdT_mask_type }};
+    {% endif %}
+    type ImaskType = <T as SelectImask{{ extension_name }}>::Output;
     type OffsetBaseType = <T as SelectOffsetBaseType>::Output;
     type OffsetBaseRegisterType = <Self::OffsetBaseType as SelectRegister{{ extension_name }}>::Output;
 }

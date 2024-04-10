@@ -87,7 +87,7 @@ class TSLFileGenerator:
                 primitive_class.file_name).joinpath(primitive_class.name).with_suffix(
                 config.get_config_entry("header_file_extension"))
             declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
-                                                                             primitive_class.data)
+                                                                             primitive_class.data, config.get_config_entry("target_language"))
 
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
             for primitive in primitive_class:
@@ -95,7 +95,7 @@ class TSLFileGenerator:
                 declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
                     declaration_data)
                 declaration_file.add_code(
-                    config.get_template("core::primitive_declaration").render(declaration_data))
+                    config.get_template(str(config.get_config_entry("target_language")) + "::primitive_declaration").render(declaration_data))
                 declaration_file.import_includes(declaration_data)
 
                 # print(primitive)
@@ -108,7 +108,7 @@ class TSLFileGenerator:
                             config.get_config_entry("header_file_extension"))
                         definition_files_per_extension_dict[
                             definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
-                                                                                          primitive_class.data)
+                                                                                          primitive_class.data, config.get_config_entry("target_language"))
                     definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
 
                     # print(definition)
@@ -321,7 +321,7 @@ class TSLFileGenerator:
         self.__create_extension_header_files(lib.extension_set)
 
         # Cpp generation
-        # self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
+        self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
         self.__create_static_header_files()
 
         # Rust generation

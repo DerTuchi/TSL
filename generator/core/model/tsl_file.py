@@ -25,6 +25,16 @@ class TSLHeaderFile:
             self.__data_dict["tsl_predefined_file_includes"] = []
         if "target_language" not in self.__data_dict:
             self.__data_dict["target_language"] = ["core"]
+        
+        def define_modulename(filename: Path):
+            root = config.get_config_entry("library")["root_path"]
+            ending = config.get_config_entry("header_file_extension")
+            prefix = "crate"
+            if root in filename.as_posix():
+                return prefix + filename.as_posix().split(root)[1].replace("/", "::").replace(ending, "::*")
+            else:
+                return filename
+        self.__modulename = define_modulename(filename)
 
     @property
     def data(self) -> YamlDataType:
@@ -75,10 +85,14 @@ class TSLHeaderFile:
 
     def render(self) -> str:
         # includes = copy.deepcopy(self.__data_dict["includes"])
-        current_path: Path = self.file_name.parent
-        tsl_file_includes = [f"\"{Path(os.path.relpath(Path(included_file.file_name), current_path))}\"" for included_file in self.__data_dict["tsl_file_includes"]]
-        self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_file_includes if tsl_include not in self.__data_dict["includes"]])
-        self.__data_dict["includes"].extend(self.__data_dict["tsl_predefined_file_includes"])
+        if self.__data_dict["target_language"] == "core":   # Maybe use new variable like: "can_use_paths"
+            current_path: Path = self.file_name.parent
+            tsl_file_includes = [f"\"{Path(os.path.relpath(Path(included_file.file_name), current_path))}\"" for included_file in self.__data_dict["tsl_file_includes"]]
+            self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_file_includes if tsl_include not in self.__data_dict["includes"]])
+            self.__data_dict["includes"].extend(self.__data_dict["tsl_predefined_file_includes"])
+        elif self.__data_dict["target_language"] == "rust":
+            tsl_module_include = [f"{included_file.__modulename}" for included_file in self.__data_dict["tsl_file_includes"]]
+            self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_module_include if tsl_include not in self.__data_dict["includes"]])
         return config.get_template(f'{self.__data_dict["target_language"]}::header_file').render(self.__data_dict)
 
     def render_to_file(self) -> None:

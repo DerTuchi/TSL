@@ -23,4 +23,9 @@ simdT_integral_mask_type: |-
 intrin_tp: {uint8_t: ["epu", 8], uint16_t: ["epu", 16], uint32_t: ["epu", 32], uint64_t: ["epu", 64], int8_t: ["epi", 8], int16_t: ["epi", 16], int32_t: ["epi", 32], int64_t: ["epi", 64], float: ["p", "s"], double: ["p", "d"]}
 intrin_tp_full: {uint8_t: "epu8", uint16_t: "epu16", uint32_t: "epu32", uint64_t: "epi64", int8_t: "epi8", int16_t: "epi16", int32_t: "epi32", int64_t: "epi64", float: "ps", double: "pd"}
 runtime_headers: ["cpu/include/tslCPUrt.hpp"]
+# Rust information
+includes_rust: ["std::arch::x86_64::*", "crate::constants::TSLArithmetic", "crate::constants::simd_traits::TargetExtension", "crate::constants::utils::helper_traits::SelectOffsetBaseType", "std::marker::PhantomData"]
+register_type_mapping: [["u8","__m256i"], ["u16","__m256i"], ["u32","__m256i"], ["u64","__m256i"], ["i8","__m256i"], ["i16","__m256i"], ["i32","__m256i"], ["i64","__m256i"], ["f32","__m256"], ["f64","__m256d"]]
+imask_mapping: [["u8","u32"], ["u16","u16"], ["u32", "u8"], ["u64", "u8"], ["i8","u32"], ["i16", "u16"], ["i32", "u8"], ["i64", "u8"], ["f32", "u8"], ["f64", "u8"]]
+mask_type_rust: "Self::RegisterType"
 ...

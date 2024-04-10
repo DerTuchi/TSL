@@ -16,7 +16,7 @@ configuration:
       root_path:                  "include"
       top_level_header_fname:     "tslintrin"
       static_files:
-         root_path:               "static"
+         root_path:               "static_files"
       hardware_specific_files:
          top_level_header_fname:  "tsl_generated"
          root_path:               "generated"

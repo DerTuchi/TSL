@@ -21,16 +21,7 @@
    additional_template_params='',
    additional_target_extension='',
    simd_register_length='') %}
-{% if vector_length_agnostic %}
-   {% set ns.simd_register_length = ', VectorSize' %}
-   {% set ns.full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns.simd_register_length ~ '>' %}
-{% elif vector_length_bits != 0 %}
-   {% set ns.simd_register_length = ', ' ~ vector_length_bits %}
-   {% set ns.full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns.simd_register_length~ '>' %}
-{% else %}
-   {% set ns.simd_register_length = '' %}
-   {% set ns.full_extension_name = ctype_rust ~ ', ' ~ target_extension %}
-{% endif %}
+{% set ns.full_extension_name = target_extension ~ '<' ~ ctype ~ '>' %}
 {% if ctype == 'T' %}
 {% set ns.partial_specialized = True %}
 {% endif %}
@@ -58,7 +49,7 @@
       {% else %}
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
-      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype']) | filter_ctype_rust  ~ comma %}
+      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype'])  ~ comma %}
       {% set ns.full_qualified_parameters_str_bridge = ns.full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
       {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
       {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
@@ -83,12 +74,14 @@
 {% set ns.additional_template_params = ns.additional_template_params ~ ", " %}
 {% endif %}
 {# Every implementation is in the (nested) namespace "details" #}
-impl {{ functor_name }}<{{ ns.full_extension_name }}> {
+
+{{ '' if is_native else '#[cfg(feature = "workaround")]' }}
+impl SimdPrimitiveImpl for {{ functor_name }}<{{ ns.full_extension_name }}> {
     /**
      * @brief: Template specialization of implementation for "{{ functor_name }}" (primitive {{ primitive_name }}).
      * @details:
      * Target Extension: {{ target_extension }}.
-     *        Data Type: {{ ctype_rust }}
+     *        Data Type: {{ ctype }}
      *  Extension Flags: {{ lscpu_flags }}
      {% if yaml_origin_line and yaml_origin_file %}
      *      Yaml Source: {{ yaml_origin_file }}::{{ yaml_origin_line }}
@@ -97,6 +90,17 @@ impl {{ functor_name }}<{{ ns.full_extension_name }}> {
      * @note: {{ specialization_comment }}
      {% endif %}
      */
+
+    type BaseType = {{ctype}};
+    type TargetExtension = {{ns.full_extension_name}};
+    type RegisterType = <Self::TargetExtension as TargetExtension>::RegisterType;
+    type ImaskType = <Self::TargetExtension as TargetExtension>::ImaskType;
+    type MaskType = <Self::TargetExtension as TargetExtension>::MaskType;
+    type OffsetBaseType = <Self::TargetExtension as TargetExtension>::OffsetBaseType;
+    type OffsetBaseRegisterType = <Self::TargetExtension as TargetExtension>::OffsetBaseRegisterType;
+    type Args = ({{ns.parameters_types}});
+    type ReturnType = {{ returns['ctype'] }};
+
     pub fn parameters_queryable() -> bool{
         return {{ 'true' if ns.has_parameters_tuple else 'false' }};
     }
@@ -108,13 +112,12 @@ impl {{ functor_name }}<{{ ns.full_extension_name }}> {
         return {{ 'true;' if is_native else 'false;' }}
     }
 
-    {{ '#[must_use] ' if returns['ctype'] != 'void' else ''}}{{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
+    {{ '#[must_use] ' if returns['ctype'] != 'None' else ''}}
+    {{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
     {{ '#[inline(always)]' if force_inline else '' }}
-    pub fn apply({{ ns.full_qualified_parameters_str }}) -> {{ctype | filter_reg_cpp(simdT_default_size_in_bits, returns['ctype']) | filter_ctype_rust}}{
-        {% for param in parameters %}
-        let {{param['name']}}_arr: [{{ctype_rust}} ; {{param['arr_length']}}] = unsafe {std::mem::transmute({{param['name']}})};
-        {% endfor %}
-        let result = ffi::{{functor_name}}_{{target_extension}}_{{ctype_rust}}({{ns.full_qualified_parameters_str_bridge}});
-        unsafe {std::mem::transmute(result)}
+    pub fn apply(self, args: Self::Args) -> Self::ReturnType{
+        let {{ vector_name }} = Self::TargetExtension::new();
+        let ({{ns.parameters_str}}) = args;
+        {{ implementation }}
     }
 } // end of struct {{ functor_name }} for template specialization of {{ functor_name }} for {{ target_extension }} using {{ ctype }}.

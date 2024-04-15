@@ -3,6 +3,10 @@ from generator.core.tsl_config import config
 
 import copy
 import logging
+from collections import defaultdict
+import re
+from generator.core.utils.tsl_rust_filter import *
+
 from pathlib import Path
 from typing import Generator
 
@@ -69,7 +73,7 @@ class TSLFileGenerator:
             file_path: Path = config.get_generation_path("extensions").joinpath(extension.file_name).joinpath(
                 extension.name).with_suffix(config.get_config_entry("header_file_extension"))
             tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, extension.data)
-            tsl_file.add_code(config.get_template("core::extension").render(extension.data))
+            tsl_file.add_code(config.get_template(str(config.get_config_entry("target_language")) + "::extension").render(extension.data))
             self.log(logging.INFO,
                      f"Created struct for hardware extension {extension.name}.")
             tsl_file.import_includes(extension.data)
@@ -84,19 +88,22 @@ class TSLFileGenerator:
                 config.get_config_entry("header_file_extension"))
             declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
                                                                              primitive_class.data)
-
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
+
+
             for primitive in primitive_class:
-                declaration_data = copy.deepcopy(primitive.declaration.data)
-                declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
-                    declaration_data)
-                declaration_file.add_code(
-                    config.get_template("core::primitive_declaration").render(declaration_data))
-                declaration_file.import_includes(declaration_data)
+                if any(definition.data["target_language"] == config.get_config_entry("target_language") for definition in primitive.definitions):
+                    declaration_data = copy.deepcopy(primitive.declaration.data)
+                    declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
+                        declaration_data)
+                    declaration_file.add_code(
+                        config.get_template(str(config.get_config_entry("target_language")) + "::primitive_declaration").render(declaration_data))
+                    declaration_file.import_includes(declaration_data)
 
                 # print(primitive)
-
-                for definition in primitive.definitions:
+                target_primitives = [i for i in primitive.definitions if i["target_language"] == config.get_config_entry("target_language")]
+                for definition in target_primitives:
+                    print(definition.data["implementation"])
                     if definition.target_extension not in definition_files_per_extension_dict:
                         primitive_path: Path = config.get_generation_path("primitive_definitions").joinpath(
                             primitive_class.file_name).joinpath(primitive_class.name).joinpath(
@@ -104,9 +111,8 @@ class TSLFileGenerator:
                             config.get_config_entry("header_file_extension"))
                         definition_files_per_extension_dict[
                             definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
-                                                                                          primitive_class.data)
+                                                                                        primitive_class.data)
                     definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
-
                     # print(definition)
 
                     definition_copy = copy.deepcopy(definition.data)
@@ -120,9 +126,9 @@ class TSLFileGenerator:
                             definition_copy["implementation"]).render(
                             decl_and_def_combined_data)
                         definition_file.add_code(
-                            config.get_template("core::primitive_definition").render(decl_and_def_combined_data))
+                            config.get_template(str(config.get_config_entry("target_language")) + "::primitive_definition").render(decl_and_def_combined_data))
                         self.log(logging.INFO,
-                                 f"Created template specialization for {primitive.declaration.name} (details::{primitive.declaration.name}_impl<simd<{ctype}, {definition.target_extension}>>)")
+                                f"Created template specialization for {primitive.declaration.name} (details::{primitive.declaration.name}_impl<simd<{ctype}, {definition.target_extension}>>)")
 
                     definition_file.import_includes(definition.data)
                     declaration_file.import_includes(definition.data)
@@ -143,13 +149,35 @@ class TSLFileGenerator:
                 static_file_path = static_file_path_without_prefix.parent
                 file_path: Path = config.lib_static_files_root_path.joinpath(static_file_path).joinpath(
                     static_file_name).with_suffix(config.get_config_entry("header_file_extension"))
-
+            
             data_dict: YamlDataType = yaml_load(static_yaml_file_path)
             tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, data_dict)
             if "implementations" in data_dict:
                 for implementation in data_dict["implementations"]:
                     tsl_file.add_code_to_be_rendered(implementation)
             self.__static_files.append(tsl_file)
+
+    def __create_modules(self, module_path_no_suffix: Path, files_dict: list) -> TSLHeaderFile:
+        self.log(logging.INFO, f"Sarting generation of modules.")
+        mod_path = module_path_no_suffix.joinpath("mod").with_suffix(config.get_config_entry("header_file_extension"))
+        file_names = [str(file.file_name).replace(str(module_path_no_suffix), "")[1:].replace(config.get_config_entry("header_file_extension"), "")
+                        if isinstance(file, TSLHeaderFile) else file
+                        for file in files_dict]
+                
+        def create_hierarchy(module_paths):
+            root = {}
+            for path in module_paths:
+                parts = path.split('/')
+                current_level = root
+                for part in parts:
+                    if part not in current_level:
+                        current_level[part] = {}
+                    current_level = current_level[part]
+            return root
+        data_dict: YamlDataType = {"module_names" : create_hierarchy(file_names)}
+        mod_file = TSLHeaderFile.create_from_dict(mod_path, data_dict)
+        mod_file.add_code( config.get_template(str(config.get_config_entry("target_language")) + "::module").render(mod_file.data))
+        return mod_file
 
     def __sort_header_files(self, sorted_keys: List[str], header_files: List[TSLHeaderFile]) -> List[TSLHeaderFile]:
         result: List[TSLHeaderFile] = []
@@ -168,27 +196,36 @@ class TSLFileGenerator:
         self.__primitive_class_declarations: List[TSLHeaderFile] = []
         self.__primitive_class_definitions: List[TSLHeaderFile] = []
 
+        
         self.__create_extension_header_files(lib.extension_set)
         self.__create_primitive_header_files(lib.extension_set, lib.primitive_class_set)
-
         self.__create_static_header_files()
-        # dep_graph = TSLDependencyGraph(lib)
-        # print("Checking implementation dependencies:")
-        # ordered_primitive_classes = list(dep_graph.sort_tsl_classes("get_implementations"))
 
-        sorted_classes_prefix: List[str] = [p for p in dependency_graph.sorted_classes_as_string()]
-        print("Sorting includes according to the following order: " + ", ".join(sorted_classes_prefix))
-        include_order_dict = {prefix: index for index, prefix in enumerate(sorted_classes_prefix)}
-        include_sort_fun = lambda x: [include_order_dict[ref] for ref in sorted_classes_prefix if x.file_name.stem.startswith(ref)]
+        if config.get_config_entry("generate_modules"):
+            self.__extension_name_to_file_dict["mod"] = self.__create_modules(config.get_generation_path("extensions") , self.__extension_name_to_file_dict.values())
+            self.__primitive_class_declarations.append(self.__create_modules(config.get_generation_path("primitive_declarations") , self.__primitive_class_declarations))
+            self.__primitive_class_definitions.append(self.__create_modules(config.get_generation_path("primitive_definitions") , self.__primitive_class_definitions))
+            self.__static_files.append(
+                self.__create_modules(config.lib_generated_files_root_path,
+                [config.get_generation_path("extensions").name, config.get_generation_path("primitive_declarations").name, config.get_generation_path("primitive_definitions").name]))
+        else:
+            # dep_graph = TSLDependencyGraph(lib)
+            # print("Checking implementation dependencies:")
+            # ordered_primitive_classes = list(dep_graph.sort_tsl_classes("get_implementations"))
 
-        generated_files_root: TSLHeaderFile = TSLHeaderFile.create_from_dict(config.lib_generated_files_root_header, {})
-        for extension_file in self.extension_files:
-            generated_files_root.add_file_include(extension_file)
-        # for primitive_declaration in self.__sort_header_files(ordered_primitive_classes, list(self.primitive_declaration_files)):
-        for primitive_declaration in sorted(self.primitive_declaration_files, key=include_sort_fun):
-            generated_files_root.add_file_include(primitive_declaration)
-        for primitive_definition in sorted(self.primitive_definition_files, key=include_sort_fun):
-            generated_files_root.add_file_include(primitive_definition)
-        for runtime_header in lib.relevant_runtime_headers:
-            generated_files_root.add_predefined_tsl_file_include(f'"{runtime_header.name}"')
-        self.__static_files.append(generated_files_root)
+            sorted_classes_prefix: List[str] = [p for p in dependency_graph.sorted_classes_as_string()]
+            print("Sorting includes according to the following order: " + ", ".join(sorted_classes_prefix))
+            include_order_dict = {prefix: index for index, prefix in enumerate(sorted_classes_prefix)}
+            include_sort_fun = lambda x: [include_order_dict[ref] for ref in sorted_classes_prefix if x.file_name.stem.startswith(ref)]
+
+            generated_files_root: TSLHeaderFile = TSLHeaderFile.create_from_dict(config.lib_generated_files_root_header, {})
+            for extension_file in self.extension_files:
+                generated_files_root.add_file_include(extension_file)
+            # for primitive_declaration in self.__sort_header_files(ordered_primitive_classes, list(self.primitive_declaration_files)):
+            for primitive_declaration in sorted(self.primitive_declaration_files, key=include_sort_fun):
+                generated_files_root.add_file_include(primitive_declaration)
+            for primitive_definition in sorted(self.primitive_definition_files, key=include_sort_fun):
+                generated_files_root.add_file_include(primitive_definition)
+            for runtime_header in lib.relevant_runtime_headers:
+                generated_files_root.add_predefined_tsl_file_include(f'"{runtime_header.name}"')
+            self.__static_files.append(generated_files_root)

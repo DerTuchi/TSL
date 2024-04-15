@@ -1,13 +1,16 @@
 ---
 configuration:
+   target_language:               "core"
    namespace:                     "tsl"
    tsl_implementation_namespace:  "functors"
-   header_file_extension:         ".hpp"
+   header_file_extension:         ".h"
    source_file_extension:         ".cpp"
+   rust_extension:                ".rs"
    root_path:                     "./generated_tsl"
    compiler_architecture_prefix:  "-m"
    use_concepts:                  True
    emit_workaround_warnings:      True
+   generate_modules:              True
    relevant_types:                 ["uint8_t", "int8_t", "uint16_t", "int16_t", "uint32_t", "int32_t", "uint64_t", "int64_t", "float", "double"]
    always_required_primitives:     ["allocate","deallocate","allocate_aligned","memory_cp","set"]
    library:
@@ -21,6 +24,7 @@ configuration:
          extensions:              "extensions"
          primitive_declarations:  "declarations"
          primitive_definitions:   "definitions"
+         bridge: "bridge"
    silent_warnings:               ["-Wno-ignored-attributes", "-Wno-attributes"]
    expansions:
       primitive_vis:

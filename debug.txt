@@ -1,0 +1,126 @@
+-- Found python at /usr/bin/python3.10
+-- lscpu flags: 3dnowprefetch abm adx aes apic arat avx avx2 bmi1 bmi2 clflush clflushopt clwb clzero cmov cmp_legacy constant_tsc cpuid cr8_legacy cx16 cx8 de erms extd_apicid f16c fma fpu fsgsbase fsrm fxsr fxsr_opt ht hypervisor ibpb ibrs lahf_lm lm mca mce misalignsse mmx mmxext movbe msr mtrr nonstop_tsc nopl nx osvw osxsave pae pat pclmulqdq pdpe1gb pge pni popcnt pse pse36 rdpid rdrand rdrnd rdseed rdtscp rep_good sep sha sha_ni smap smep sse sse2 sse4_1 sse4_2 sse4a ssse3 stibp syscall topoext tsc tsc_reliable umip vaes vme vmmcall vpclmulqdq xgetbv1 xsave xsavec xsaveerptr xsaveopt xsaves
+-- === SUMMARY: TSL Generation ===
+-- Script path      : /home/dertuchi/work/TSL/main.py
+-- Generation path  : /home/dertuchi/work/TSL/generated_tsl/generator_output
+-- Switches         : 
+--    --targets;3dnowprefetch;abm;adx;aes;apic;arat;avx;avx2;bmi1;bmi2;clflush;clflushopt;clwb;clzero;cmov;cmp_legacy;constant_tsc;cpuid;cr8_legacy;cx16;cx8;de;erms;extd_apicid;f16c;fma;fpu;fsgsbase;fsrm;fxsr;fxsr_opt;ht;hypervisor;ibpb;ibrs;lahf_lm;lm;mca;mce;misalignsse;mmx;mmxext;movbe;msr;mtrr;nonstop_tsc;nopl;nx;osvw;osxsave;pae;pat;pclmulqdq;pdpe1gb;pge;pni;popcnt;pse;pse36;rdpid;rdrand;rdrnd;rdseed;rdtscp;rep_good;sep;sha;sha_ni;smap;smep;sse;sse2;sse4_1;sse4_2;sse4a;ssse3;stibp;syscall;topoext;tsc;tsc_reliable;umip;vaes;vme;vmmcall;vpclmulqdq;xgetbv1;xsave;xsavec;xsaveerptr;xsaveopt;xsaves
+--    all primitives
+--    all types
+-- Generator Options: --no-workaround-warnings;--testing;--no-draw-test-dependencies;--no-concepts
+-- Target Options   : 
+-- ===============================
+-- Running TSL Generator...
+-- Executing command: /usr/bin/python3.10 /home/dertuchi/work/TSL/main.py --no-workaround-warnings;--testing;--no-draw-test-dependencies;--no-concepts -o /home/dertuchi/work/TSL/generated_tsl/generator_output --targets;3dnowprefetch;abm;adx;aes;apic;arat;avx;avx2;bmi1;bmi2;clflush;clflushopt;clwb;clzero;cmov;cmp_legacy;constant_tsc;cpuid;cr8_legacy;cx16;cx8;de;erms;extd_apicid;f16c;fma;fpu;fsgsbase;fsrm;fxsr;fxsr_opt;ht;hypervisor;ibpb;ibrs;lahf_lm;lm;mca;mce;misalignsse;mmx;mmxext;movbe;msr;mtrr;nonstop_tsc;nopl;nx;osvw;osxsave;pae;pat;pclmulqdq;pdpe1gb;pge;pni;popcnt;pse;pse36;rdpid;rdrand;rdrnd;rdseed;rdtscp;rep_good;sep;sha;sha_ni;smap;smep;sse;sse2;sse4_1;sse4_2;sse4a;ssse3;stibp;syscall;topoext;tsc;tsc_reliable;umip;vaes;vme;vmmcall;vpclmulqdq;xgetbv1;xsave;xsavec;xsaveerptr;xsaveopt;xsaves  
+Generating for ['3dnowprefetch', 'abm', 'adx', 'aes', 'apic', 'arat', 'avx', 'avx2', 'bmi1', 'bmi2', 'clflush', 'clflushopt', 'clwb', 'clzero', 'cmov', 'cmp_legacy', 'constant_tsc', 'cpuid', 'cr8_legacy', 'cx16', 'cx8', 'de', 'erms', 'extd_apicid', 'f16c', 'fma', 'fpu', 'fsgsbase', 'fsrm', 'fxsr', 'fxsr_opt', 'ht', 'hypervisor', 'ibpb', 'ibrs', 'lahf_lm', 'lm', 'mca', 'mce', 'misalignsse', 'mmx', 'mmxext', 'movbe', 'msr', 'mtrr', 'nonstop_tsc', 'nopl', 'nx', 'osvw', 'osxsave', 'pae', 'pat', 'pclmulqdq', 'pdpe1gb', 'pge', 'pni', 'popcnt', 'pse', 'pse36', 'rdpid', 'rdrand', 'rdrnd', 'rdseed', 'rdtscp', 'rep_good', 'sep', 'sha', 'sha_ni', 'smap', 'smep', 'sse', 'sse2', 'sse4_1', 'sse4_2', 'sse4a', 'ssse3', 'stibp', 'syscall', 'topoext', 'tsc', 'tsc_reliable', 'umip', 'vaes', 'vme', 'vmmcall', 'vpclmulqdq', 'xgetbv1', 'xsave', 'xsavec', 'xsaveerptr', 'xsaveopt', 'xsaves', 'ANY']
+crate::generated::extensions::simd::intel::sse::*
+crate::generated::extensions::scalar::*
+crate::generated::extensions::simd::intel::avx2::*
+crate::generated::declarations::calc::*
+crate::generated::definitions::calc::calc_avx2::*
+crate::generated::definitions::calc::calc_sse::*
+crate::generated::definitions::calc::calc_scalar::*
+crate::generated::declarations::memory::*
+crate::generated::definitions::memory::memory_avx2::*
+crate::generated::definitions::memory::memory_sse::*
+crate::generated::definitions::memory::memory_scalar::*
+crate::generated::declarations::convert::*
+crate::generated::definitions::convert::convert_avx2::*
+crate::generated::definitions::convert::convert_sse::*
+crate::generated::definitions::convert::convert_scalar::*
+crate::generated::declarations::misc::*
+crate::generated::definitions::misc::misc_avx2::*
+crate::generated::definitions::misc::misc_sse::*
+crate::generated::definitions::misc::misc_scalar::*
+crate::generated::declarations::compare::*
+crate::generated::definitions::compare::compare_avx2::*
+crate::generated::definitions::compare::compare_sse::*
+crate::generated::definitions::compare::compare_scalar::*
+crate::generated::declarations::io::*
+crate::generated::definitions::io::io_avx2::*
+crate::generated::definitions::io::io_sse::*
+crate::generated::declarations::binary::*
+crate::generated::definitions::binary::binary_avx2::*
+crate::generated::definitions::binary::binary_sse::*
+crate::generated::definitions::binary::binary_scalar::*
+crate::generated::declarations::ls::*
+crate::generated::definitions::ls::ls_avx2::*
+crate::generated::definitions::ls::ls_sse::*
+crate::generated::definitions::ls::ls_scalar::*
+crate::generated::declarations::mask::*
+crate::generated::definitions::mask::mask_avx2::*
+crate::generated::definitions::mask::mask_sse::*
+crate::generated::definitions::mask::mask_scalar::*
+crate::static_files::mod::*
+crate::static_files::simd_traits::*
+crate::static_files::utils::mod::*
+crate::static_files::utils::helper_traits::*
+Sorting includes according to the following order: ls, convert, memory, misc, compare, io, binary, mask, calc
+crate::generated::tsl_generated::*
+Reading from /home/dertuchi/work/TSL/supplementary/runtime/cpu/include/tslCPUrt.hpp
+Writing to /home/dertuchi/work/TSL/generated_tsl/generator_output/supplementary/runtime/cpu/include/tslCPUrt.hpp
+TSL - Summary:
+  - # Primitive Classes:  9
+  - # Primitives:         82
+  - # Tests:              96
+  - Primitives w/ Tests:  58
+  - Primitives w/o Tests: 
+                          allocate
+                          allocate_aligned
+                          deallocate
+                          memory_cp
+                          reinterpret
+                          blend_add
+                          undefined
+                          to_ostream
+                          mask_gather
+                          scatter
+                          mask_scatter
+                          load_convert_up
+                          to_mask
+                          imask_binary_not
+                          mask_binary_not
+                          mask_binary_and
+                          imask_binary_and
+                          mask_binary_or
+                          imask_binary_or
+                          mask_binary_xor
+                          imask_binary_xor
+                          integral_all_true
+                          integral_all_false
+                          load_mask
+                          ==============================================================
+                          24
+  - Unsafe Tests:          
+                          mask_add::<zero_mask> -> to_mask::<MISSING>
+                          mask_add::<all_one_mask> -> to_mask::<MISSING>
+                          blend::<default> -> to_mask::<MISSING>
+                          to_vector::<full_mask> -> to_mask::<MISSING>
+                          to_vector::<no_mask> -> to_mask::<MISSING>
+                          mask_add::<all_one_mask> -> integral_all_true::<MISSING>
+                          imask_conflict_free::<default> -> integral_all_true::<MISSING>
+                          to_vector::<full_mask> -> integral_all_true::<MISSING>
+                          mask_add::<zero_mask> -> integral_all_false::<MISSING>
+                          to_vector::<no_mask> -> integral_all_false::<MISSING>
+                          ==============================================================
+                          6 (10 specific missing dependencies)
+  - Test Coverage:        70.73%
+  - Avg. Tests/Primitive: 1.17
+/home/dertuchi/work/TSL/generated_tsl/generator_output/src/test/test_functions.rs
+To use TSL, apply the following changes:
+   CMakeLists.txt (top-level):                 add_subdirectory(generator_output)
+                                               target_link_libraries(<target> tsl)
+   C++ Source/Header file which uses TSL:      #include <tslintrin.rs>
+General usage:
+   Using namespace declaration:                /*...*/ 
+   (we generally discourage this               using namespace tsl;
+    kind of usage)                             auto result = add<simd<uint64_t, sse>>(a, b);
+                                               /*...*/
+   Explicit usage:                             /*...*/ 
+                                               auto result = tsl::add<tsl::simd<uint64_t, tsl::sse>>(a, b);
+                                               /*...*/ 
+Generation needed 4.80 seconds.
+-- TSL Include Directory: /home/dertuchi/work/TSL/generated_tsl/generator_output/include
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/dertuchi/work/TSL/generated_tsl

@@ -1,0 +1,29 @@
+{% include 'core/license.template' %}
+
+{% include 'core/doxygen_file.template' %}
+
+{% for include in includes %}
+use {{ include }};
+{% endfor %}
+use std::marker::PhantomData;
+use crate::static_files::simd_traits::TargetExtension;
+
+
+{% if codes %}
+{% if nested_namespaces is defined %}
+{% for nested_namespace in nested_namespaces %}
+namespace {{ nested_namespace }} {
+{% endfor %}
+{% endif %}
+
+{%    for code in codes %}
+{{ code }}
+
+{%    endfor %}
+
+{% if nested_namespaces %}
+{% for nested_namespace in nested_namespaces %}
+} // end of namespace {{ nested_namespace }}
+{% endfor %}
+{% endif %}
+{% endif %}

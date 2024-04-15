@@ -85,7 +85,7 @@ class TSLHeaderFile:
 
     def render(self) -> str:
         # includes = copy.deepcopy(self.__data_dict["includes"])
-        if self.__data_dict["target_language"] == "core":   # Maybe use new variable like: "can_use_paths"
+        if self.__data_dict["target_language"] == "core":
             current_path: Path = self.file_name.parent
             tsl_file_includes = [f"\"{Path(os.path.relpath(Path(included_file.file_name), current_path))}\"" for included_file in self.__data_dict["tsl_file_includes"]]
             self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_file_includes if tsl_include not in self.__data_dict["includes"]])

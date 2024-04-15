@@ -1,0 +1,9 @@
+{% macro render_hierarchy(hierarchy, indent=0) %}
+{% for module, sub_hierarchy in hierarchy.items() %}
+{{ "    " * indent }}pub mod {{ module }}{% if sub_hierarchy %} {
+{{ render_hierarchy(sub_hierarchy, indent + 1) }}{{ "    " * indent }}}{% else %};{% endif %}
+{% if not loop.last %}{{ "\n" }}{% endif %}
+{% endfor %}
+{% endmacro %}
+
+{{ render_hierarchy(module_names) }}

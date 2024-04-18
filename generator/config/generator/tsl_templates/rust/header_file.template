@@ -7,7 +7,7 @@ use {{ include }};
 {% endfor %}
 use std::marker::PhantomData;
 use crate::static_files::simd_traits::TargetExtension;
-
+use crate::static_files::TSLArithmetic;
 
 {% if codes %}
 {% if nested_namespaces is defined %}

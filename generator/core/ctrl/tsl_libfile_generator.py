@@ -5,7 +5,6 @@ import copy
 import logging
 from collections import defaultdict
 import re
-from generator.core.utils.tsl_rust_filter import *
 
 from pathlib import Path
 from typing import Generator
@@ -90,20 +89,18 @@ class TSLFileGenerator:
                                                                              primitive_class.data)
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
 
-
-            for primitive in primitive_class:
-                if any(definition.data["target_language"] == config.get_config_entry("target_language") for definition in primitive.definitions):
-                    declaration_data = copy.deepcopy(primitive.declaration.data)
-                    declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
-                        declaration_data)
-                    declaration_file.add_code(
-                        config.get_template(str(config.get_config_entry("target_language")) + "::primitive_declaration").render(declaration_data))
-                    declaration_file.import_includes(declaration_data)
+            target_primitives = [i for i in primitive_class if i.declaration.data["target_language"] == config.get_config_entry("target_language")]
+            for primitive in target_primitives:
+                declaration_data = copy.deepcopy(primitive.declaration.data)
+                declaration_data["additional_parameter_type"] = any(bool(definition.data["additional_simd_template_extension"]) for definition in primitive.definitions)
+                declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
+                    declaration_data)
+                declaration_file.add_code(
+                    config.get_template(str(config.get_config_entry("target_language")) + "::primitive_declaration").render(declaration_data))
+                declaration_file.import_includes(declaration_data)
 
                 # print(primitive)
-                target_primitives = [i for i in primitive.definitions if i["target_language"] == config.get_config_entry("target_language")]
-                for definition in target_primitives:
-                    print(definition.data["implementation"])
+                for definition in primitive.definitions:
                     if definition.target_extension not in definition_files_per_extension_dict:
                         primitive_path: Path = config.get_generation_path("primitive_definitions").joinpath(
                             primitive_class.file_name).joinpath(primitive_class.name).joinpath(

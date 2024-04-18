@@ -25,6 +25,7 @@ set(OLD_GLOB
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/expansions/unit_test.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/extension.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/header_file.template"
+  "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/module.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/primitive_declaration.template"
   "/home/dertuchi/work/TSL/generator/config/generator/tsl_templates/rust/primitive_definition.template"
   )
@@ -63,7 +64,6 @@ set(OLD_GLOB
   "/home/dertuchi/work/TSL/generator/core/tsl_generator.py"
   "/home/dertuchi/work/TSL/generator/core/utils/__init__.py"
   "/home/dertuchi/work/TSL/generator/core/utils/tsl_misc.py"
-  "/home/dertuchi/work/TSL/generator/core/utils/tsl_rust_filter.py"
   "/home/dertuchi/work/TSL/generator/core/utils/tsl_type_mappings.py"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
@@ -151,6 +151,7 @@ set(OLD_GLOB
   "/home/dertuchi/work/TSL/primitive_data/primitives/io.yaml"
   "/home/dertuchi/work/TSL/primitive_data/primitives/ls.yaml"
   "/home/dertuchi/work/TSL/primitive_data/primitives/mask.yaml"
+  "/home/dertuchi/work/TSL/primitive_data/primitives/mask_ls.yaml"
   "/home/dertuchi/work/TSL/primitive_data/primitives/memory.yaml"
   "/home/dertuchi/work/TSL/primitive_data/primitives/misc.yaml"
   )

@@ -279,6 +279,11 @@ primitive:
       brief: "Name of the primitive."
       example: "load"
   optional:
+    target_language:
+      type: "str"
+      default: "rust"
+      brief: "Name of the programming language."
+      recommended: True
     functor_name:
       type: "str"
       default: ""

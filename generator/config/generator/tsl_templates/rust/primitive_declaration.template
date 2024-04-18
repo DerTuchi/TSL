@@ -6,7 +6,8 @@
    parameters_str='',
    additional_template_type_name='',
    additional_template_params_with_defaults='',
-   additional_template_name=''
+   additional_template_name='',
+   phantomdata=''
    ) %}
 {% for param in parameters %}
    {% if not loop.last %}
@@ -43,8 +44,10 @@
 {% set ns.parameter_pack_typenames_str = ', ' ~ ns.parameter_pack_typenames_str %}
 {% endif %}
 {% if additional_simd_template_parameter["name"] != "" %}
-{% set ns.additional_template_type_name = 'typename ' ~ additional_simd_template_parameter["name"] ~ ', ' %}
+{% set tp_type = 'TargetExtension' if additional_parameter_type else 'TSLArithmetic'%}
+{% set ns.additional_template_type_name = additional_simd_template_parameter["name"] ~ ' : ' ~ tp_type ~ ', ' %}
 {% set ns.additional_template_params_with_defaults = 'typename ' ~ additional_simd_template_parameter["name"] %}
+{% set ns.phantomdata = 'pub PhantomData<'~ additional_simd_template_parameter["name"] ~ '>, '%}
 {% if additional_simd_template_parameter["default_value"] != "" %}
 {% set ns.additional_template_params_with_defaults = ns.additional_template_params_with_defaults ~ " = " ~ additional_simd_template_parameter["default_value"] ~ ", "%}
 {% else %}
@@ -57,8 +60,8 @@
 {% for parameter_dict in additional_non_specialized_template_parameters %}
 {% set loop_comma = '' if loop.first else ', ' %}
 {% set rtp_ns.params = rtp_ns.params ~ loop_comma ~ parameter_dict["name"] %}
-{% set rtp_ns.types = rtp_ns.types ~ loop_comma ~ parameter_dict["ctype"] ~ ' ' ~ parameter_dict["name"] %}
-{% set rtp_ns.params_with_defaults = rtp_ns.params_with_defaults ~ loop_comma ~ parameter_dict["ctype"] ~ ' ' ~ parameter_dict["name"] %}
+{% set rtp_ns.types = rtp_ns.types ~ loop_comma ~ "const " ~ parameter_dict["name"] ~ " : " ~ parameter_dict["ctype"] %}
+{% set rtp_ns.params_with_defaults = rtp_ns.params_with_defaults ~ loop_comma ~ "const " ~ parameter_dict["name"] ~ " : " ~ parameter_dict["ctype"] %}
 {% if parameter_dict["default_value"] != "" %}
 {% set rtp_ns.params_with_defaults = rtp_ns.params_with_defaults ~ ' = ' ~ parameter_dict["default_value"] %}
 {% endif %}
@@ -69,9 +72,4 @@
 {% endif %}
 {# Every implementation is in the (nested) namespace "functors" #}
 {# This is the forward declaration of the actual primitive implementation struct #}
-pub struct {{functor_name}}<T: TargetExtension>(pub PhantomData<T>);
-impl<T: TargetExtension> {{functor_name}}<T>{
-   pub fn new() -> Self{
-      {{functor_name}}(PhantomData)
-   }
-}
+pub struct {{ functor_name }}<{{ ns.additional_template_type_name }}T: TargetExtension>({{ns.phantomdata}}pub PhantomData<T>);

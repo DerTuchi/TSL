@@ -49,7 +49,7 @@
       {% else %}
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
-      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype'])  ~ comma %}
+      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype ~ comma %}
       {% set ns.full_qualified_parameters_str_bridge = ns.full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
       {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
       {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
@@ -57,6 +57,7 @@
 {% endfor %}
 {% if additional_simd_template_parameter["name"] != "" %}
     {% if additional_simd_template_extension != "" %}
+        {% set ns.additional_template_params = ns.additional_template_params ~ additional_simd_template_extension ~ ', ' %}
         {% set ns.additional_target_extension = additional_simd_template_extension %}
     {% else %}
         {% set ns.additional_target_extension = target_extension %}
@@ -67,16 +68,16 @@
 {% if additional_non_specialized_template_parameters|length > 0 %}
 {% for parameter_dict in additional_non_specialized_template_parameters %}
 {% set loop_comma = '' if loop.first else ', ' %}
-{% set ns.additional_templates = ns.additional_templates ~ loop_comma ~ parameter_dict["ctype"] ~ ' ' ~ parameter_dict["name"] %}
+{% set ns.additional_templates = ns.additional_templates ~ loop_comma ~ 'const ' ~ parameter_dict["name"] ~ ' : ' ~ parameter_dict["ctype"] %}
 {% set ns.additional_template_params = ns.additional_template_params ~ loop_comma ~ parameter_dict["name"] %}
 {% endfor %}
-{% set ns.additional_templates = ns.additional_templates ~ ", " %}
+{% set ns.additional_templates = '<' ~ ns.additional_templates ~ '>' %}
 {% set ns.additional_template_params = ns.additional_template_params ~ ", " %}
 {% endif %}
 {# Every implementation is in the (nested) namespace "details" #}
 
 {{ '' if is_native else '#[cfg(feature = "workaround")]' }}
-impl SimdPrimitiveImpl for {{ functor_name }}<{{ ns.full_extension_name }}> {
+impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<{{ns.additional_template_params}}{{ ns.full_extension_name }}> {
     /**
      * @brief: Template specialization of implementation for "{{ functor_name }}" (primitive {{ primitive_name }}).
      * @details:
@@ -93,6 +94,9 @@ impl SimdPrimitiveImpl for {{ functor_name }}<{{ ns.full_extension_name }}> {
 
     type BaseType = {{ctype}};
     type TargetExtension = {{ns.full_extension_name}};
+    {% if additional_simd_template_parameter["name"] != "" %}
+    type AdditionalParam = {{ns.additional_target_extension}};
+    {% endif %}
     type RegisterType = <Self::TargetExtension as TargetExtension>::RegisterType;
     type ImaskType = <Self::TargetExtension as TargetExtension>::ImaskType;
     type MaskType = <Self::TargetExtension as TargetExtension>::MaskType;
@@ -112,11 +116,9 @@ impl SimdPrimitiveImpl for {{ functor_name }}<{{ ns.full_extension_name }}> {
         return {{ 'true;' if is_native else 'false;' }}
     }
 
-    {{ '#[must_use] ' if returns['ctype'] != 'None' else ''}}
-    {{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
+    {{ '#[must_use] ' if returns['ctype'] != 'None' else ''}}{{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
     {{ '#[inline(always)]' if force_inline else '' }}
-    pub fn apply(self, args: Self::Args) -> Self::ReturnType{
-        let {{ vector_name }} = Self::TargetExtension::new();
+    pub fn apply(args: Self::Args) -> Self::ReturnType{
         let ({{ns.parameters_str}}) = args;
         {{ implementation }}
     }

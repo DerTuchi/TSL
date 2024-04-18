@@ -9,6 +9,7 @@ implementations:
       type ReturnType;
       type BaseType;
       type TargetExtension;
+      type AdditionalParam = (); //empty initialization for implementations that dont need it
       type RegisterType;
       type ImaskType;
       type MaskType;
@@ -18,7 +19,7 @@ implementations:
       fn parameters_queryable(&self) -> bool;
       fn has_return_value(&self) -> bool;
       fn native_supported(&self) -> bool;
-      fn apply(self, args: Self::Args) -> Self::ReturnType; // No "&self" so that the instance destroys itself after calling apply.
+      fn apply(self, args: Self::Args) -> Self::ReturnType;
     }
 
     pub trait TargetExtension{

@@ -68,33 +68,29 @@ where
     T : TSLArithmetic + SelectRegister{{ extension_name }} + SelectImask{{ extension_name }} + SelectOffsetBaseType,
         <T as SelectOffsetBaseType>::Output: SelectRegister{{ extension_name }}
 {
-    const DEFAULT_SIZE_IN_BITS : usize = {{ns.default_vector_size}};
+    const DEFAULT_SIZE_IN_BITS : usize = 128;
 
-    pub fn new() -> Self {
-        {{ extension_name }}(PhantomData)
-    }
-    
-    pub const fn vector_size_b(&self) -> usize{
+    pub const fn vector_size_b() -> usize{
         Self::DEFAULT_SIZE_IN_BITS
     }
-    pub const fn vector_size_B(&self) -> usize{
-        self.vector_element_count() * std::mem::size_of::<T>()
+    pub const fn vector_size_bytes() -> usize{
+        Self::vector_element_count() * std::mem::size_of::<T>()
     }
-    pub const fn vector_element_count(&self) -> usize{
-        self.vector_size_b() / (std::mem::size_of::<T>() * 8)
+    pub const fn vector_element_count() -> usize{
+        Self::vector_size_b() / (std::mem::size_of::<T>() * 8)
     }
-    pub const fn vector_alignment(&self) -> usize {
-        if self.vector_size_B() > 32 {
+    pub const fn vector_alignment() -> usize {
+        if Self::vector_size_bytes() > 32 {
             64
         } else {
-            self.vector_size_B()
+            Self::vector_size_bytes()
         }
     }
-    pub const fn vector_mask_ratio(&self) -> usize {
-        (std::mem::size_of::<<Self as TargetExtension>::MaskType>() * 8) / self.vector_element_count()
+    pub const fn vector_mask_ratio() -> usize {
+        (std::mem::size_of::<<Self as TargetExtension>::MaskType>() * 8) / Self::vector_element_count()
     }
-    pub const fn mask_shift(&self) -> usize {
-        self.vector_element_count()
+    pub const fn mask_shift() -> usize {
+        Self::vector_element_count()
     }
 }
 

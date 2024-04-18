@@ -23,8 +23,6 @@ class TSLHeaderFile:
         self.__data_dict = copy.deepcopy(data_dict)
         if "tsl_predefined_file_includes" not in self.__data_dict:
             self.__data_dict["tsl_predefined_file_includes"] = []
-        if "target_language" not in self.__data_dict:
-            self.__data_dict["target_language"] = ["core"]
         
         def define_modulename(filename: Path):
             root = config.get_config_entry("library")["root_path"]
@@ -35,6 +33,10 @@ class TSLHeaderFile:
             else:
                 return filename
         self.__modulename = define_modulename(filename)
+
+    @property
+    def file_module(self) -> str:
+        return self.__modulename
 
     @property
     def data(self) -> YamlDataType:
@@ -91,7 +93,7 @@ class TSLHeaderFile:
             self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_file_includes if tsl_include not in self.__data_dict["includes"]])
             self.__data_dict["includes"].extend(self.__data_dict["tsl_predefined_file_includes"])
         elif self.__data_dict["target_language"] == "rust":
-            tsl_module_include = [f"{included_file.__modulename}" for included_file in self.__data_dict["tsl_file_includes"]]
+            tsl_module_include = [f"{included_file.file_module}" for included_file in self.__data_dict["tsl_file_includes"]]
             self.__data_dict["includes"].extend([tsl_include for tsl_include in tsl_module_include if tsl_include not in self.__data_dict["includes"]])
         return config.get_template(f'{self.__data_dict["target_language"]}::header_file').render(self.__data_dict)
 

@@ -71,7 +71,7 @@ class TSLFileGenerator:
         for extension in extension_set:
             file_path: Path = config.get_generation_path("extensions").joinpath(extension.file_name).joinpath(
                 extension.name).with_suffix(config.get_config_entry("header_file_extension"))
-            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, extension.data)
+            tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, {**extension.data, "is_declaration": True})
             tsl_file.add_code(config.get_template(str(config.get_config_entry("target_language")) + "::extension").render(extension.data))
             self.log(logging.INFO,
                      f"Created struct for hardware extension {extension.name}.")
@@ -86,7 +86,7 @@ class TSLFileGenerator:
                 primitive_class.file_name).joinpath(primitive_class.name).with_suffix(
                 config.get_config_entry("header_file_extension"))
             declaration_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(declaration_file_path,
-                                                                             primitive_class.data)
+                                                                            {**primitive_class.data, "is_declaration": True})
             definition_files_per_extension_dict: Dict[str, TSLHeaderFile] = dict()
 
             target_primitives = [i for i in primitive_class if i.declaration.data["target_language"] == config.get_config_entry("target_language")]
@@ -130,6 +130,10 @@ class TSLFileGenerator:
                     definition_file.import_includes(definition.data)
                     declaration_file.import_includes(definition.data)
                     definition_file.add_file_include(declaration_file)
+
+                    # Needed to specificly include used TargetExtension in Rust
+                    if config.get_config_entry("target_language") == "rust":
+                        definition_file.add_file_include(self.__extension_name_to_file_dict[definition.target_extension])
 
             self.__primitive_class_declarations.append(declaration_file)
             self.__primitive_class_definitions.extend(definition_files_per_extension_dict.values())

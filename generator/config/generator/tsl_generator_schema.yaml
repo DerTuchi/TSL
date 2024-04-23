@@ -106,6 +106,7 @@ extension:
       example: "{sse4_1: 'msse4.1', sse4_2: 'msse4.2'}"
       default: {}
     includes: *includes
+    includes_rust: *includes
     runtime_headers:
       type: "list"
       entry_type: "str"
@@ -281,7 +282,7 @@ primitive:
   optional:
     target_language:
       type: "str"
-      default: "rust"
+      default: "core" #TODO change to "core"
       brief: "Name of the programming language."
       recommended: True
     functor_name:

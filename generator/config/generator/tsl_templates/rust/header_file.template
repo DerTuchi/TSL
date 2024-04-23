@@ -2,15 +2,22 @@
 
 {% include 'core/doxygen_file.template' %}
 
-
 {% if is_declaration %}
 use std::marker::PhantomData;
 use crate::static_files::TSLArithmetic;
 {% endif %}
-use crate::static_files::simd_traits::*;
+{% if includes_rust %}
+{% for include in includes_rust %}
+use {{include}};
+{% endfor %}
+{% else %}
 {% for include in includes %}
 use {{ include }};
 {% endfor %}
+{% endif %}
+{% if not is_static %}
+use crate::static_files::simd_traits::*;
+{% endif %}
 
 {% if codes %}
 {% if nested_namespaces is defined %}

@@ -16,10 +16,10 @@ implementations:
       type OffsetBaseType;
       type OffsetBaseRegisterType;
 
-      fn parameters_queryable(&self) -> bool;
-      fn has_return_value(&self) -> bool;
-      fn native_supported(&self) -> bool;
-      fn apply(self, args: Self::Args) -> Self::ReturnType;
+      fn parameters_queryable() -> bool;
+      fn has_return_value() -> bool;
+      fn native_supported() -> bool;
+      fn apply(args: Self::Args) -> Self::ReturnType;
     }
 
     pub trait TargetExtension{

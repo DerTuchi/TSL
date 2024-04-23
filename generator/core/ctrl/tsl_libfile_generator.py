@@ -131,9 +131,12 @@ class TSLFileGenerator:
                     declaration_file.import_includes(definition.data)
                     definition_file.add_file_include(declaration_file)
 
-                    # Needed to specificly include used TargetExtension in Rust
+                    # Needed to specificly include used TargetExtension and simd_intrinsics in Rust
                     if config.get_config_entry("target_language") == "rust":
                         definition_file.add_file_include(self.__extension_name_to_file_dict[definition.target_extension])
+                        for include in self.__extension_name_to_file_dict[definition.target_extension].data["includes_rust"]:
+                            definition_file.add_include(include)
+                            
 
             self.__primitive_class_declarations.append(declaration_file)
             self.__primitive_class_definitions.extend(definition_files_per_extension_dict.values())
@@ -152,6 +155,8 @@ class TSLFileGenerator:
                     static_file_name).with_suffix(config.get_config_entry("header_file_extension"))
             
             data_dict: YamlDataType = yaml_load(static_yaml_file_path)
+            if config.get_config_entry("target_language") == "rust":
+                data_dict["is_static"] = True
             tsl_file: TSLHeaderFile = TSLHeaderFile.create_from_dict(file_path, data_dict)
             if "implementations" in data_dict:
                 for implementation in data_dict["implementations"]:

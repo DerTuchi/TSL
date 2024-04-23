@@ -3,7 +3,7 @@
 
 # Relative path conversion top directories.
 set(CMAKE_RELATIVE_PATH_TOP_SOURCE "/home/dertuchi/TSL")
-set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/dertuchi/TSL/generated_tsl")
+set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/dertuchi/TSL/generated_tsl_cpp")
 
 # Force unix paths in dependencies.
 set(CMAKE_FORCE_UNIX_PATHS 1)

@@ -10,9 +10,9 @@ configuration:
    use_concepts:                  True
    emit_workaround_warnings:      True
    generate_modules:              True
-   relevant_types:                 ["uint8_t", "int8_t", "uint16_t", "int16_t", "uint32_t", "int32_t", "uint64_t", "int64_t", "float", "double"]
-   # relevant_types:                 ["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "f32", "f64"]
-   always_required_primitives:     ["allocate","deallocate","allocate_aligned","memory_cp","set"]
+   # relevant_types:                 ["uint8_t", "int8_t", "uint16_t", "int16_t", "uint32_t", "int32_t", "uint64_t", "int64_t", "float", "double"]
+   relevant_types:                 ["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "f32", "f64"]
+   always_required_primitives:     [] #TODO Add back the required primitives
    library:
       root_path:                  "include"
       top_level_header_fname:     "tslintrin"

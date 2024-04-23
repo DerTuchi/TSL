@@ -1,0 +1,21 @@
+strict digraph  {
+memory;
+ls;
+mask_ls;
+mask;
+calc;
+convert;
+binary;
+misc;
+io;
+compare;
+ls -> mask_ls;
+ls -> mask;
+ls -> calc;
+ls -> binary;
+ls -> misc;
+mask_ls -> compare;
+mask -> mask_ls;
+mask -> misc;
+convert -> calc;
+}

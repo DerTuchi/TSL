@@ -582,6 +582,60 @@ definitions:
 ...
 ---
 primitive_name: "less_than"
+target_language: "rust"
+brief_description: "Tests whether left elements are smaller than the corresponding right ones."
+parameters:
+  - ctype: "Self::RegisterType"
+    name: "vec_a"
+    description: "Left vector."
+  - ctype: "Self::RegisterType"
+    name: "vec_b"
+    description: "Right vector."
+returns:
+  ctype: "Self::MaskType"
+  description: "Vector mask type indicating whether vec_a[*] < vec_b[*]"
+definitions:
+#AVX2
+  - target_extension: "avx2"
+    ctype: ["i8", "i16", "i32", "i64"]
+    lscpu_flags: ['avx2']
+    implementation: "unsafe{_mm256_cmpgt_{{ intrin_tp_full[ctype] }}(vec_b, vec_a)}"
+  - target_extension: "avx2"
+    ctype: ["f32", "f64"]
+    lscpu_flags: ['avx']
+    implementation: "unsafe{_mm256_cmp_p{{ intrin_tp[ctype][1] }}(vec_a, vec_b, _CMP_LT_OQ)}"
+  - target_extension: "avx2"
+    ctype: ["u8", "u16", "u32"]
+    lscpu_flags: ['avx2']
+    implementation: |
+      unsafe{_mm256_andnot_si256(
+        _mm256_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, vec_b),
+        _mm256_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, _mm256_min_{{ intrin_tp_full[ctype] }}(vec_a, vec_b)))}
+      
+#INTEL - SSE
+  - target_extension: "sse"
+    ctype: ["u8", "u16", "i32", "f32", "f64"]
+    lscpu_flags: ['sse2']
+    implementation: "unsafe{_mm_cmplt_{{ intrin_tp_full[ctype] }}(vec_a, vec_b)}"
+  - target_extension: "sse"
+    ctype: ["i64"]
+    lscpu_flags: ['sse4_2']
+    implementation: "unsafe{_mm_cmpgt_epi64(vec_b, vec_a)}"
+  - target_extension: "sse"
+    ctype: ["u8", "u16", "u32"]
+    lscpu_flags: ['sse2', 'sse4_1']
+    implementation: |
+      unsafe{_mm_andnot_si128(
+        _mm_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, vec_b),
+        _mm_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, _mm_min_{{ intrin_tp_full[ctype] }}(vec_a, vec_b)))}
+#SCALAR
+  - target_extension: "scalar"
+    ctype: ["u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64", "f32", "f64"]
+    lscpu_flags: []
+    implementation: "(vec_a < vec_b)"
+...
+---
+primitive_name: "less_than"
 brief_description: "Tests whether left elements are smaller than the corresponding right ones."
 parameters:
   - ctype: "const typename Vec::register_type"

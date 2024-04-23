@@ -105,20 +105,20 @@ impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<{{ns.ad
     type Args = ({{ns.parameters_types}});
     type ReturnType = {{ returns['ctype'] }};
 
-    pub fn parameters_queryable() -> bool{
+    fn parameters_queryable() -> bool{
         return {{ 'true' if ns.has_parameters_tuple else 'false' }};
     }
-    pub fn has_return_value() -> bool {
+    fn has_return_value() -> bool {
         return {{ 'true' if returns['ctype'] != 'void' else 'false' }};
     }
-    pub fn native_supported() -> bool {
+    fn native_supported() -> bool {
 {# If there is hardware support this function returns true, false otherwise. #}
         return {{ 'true;' if is_native else 'false;' }}
     }
 
     {{ '#[must_use] ' if returns['ctype'] != 'None' else ''}}{{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
     {{ '#[inline(always)]' if force_inline else '' }}
-    pub fn apply(args: Self::Args) -> Self::ReturnType{
+    fn apply(args: Self::Args) -> Self::ReturnType{
         let ({{ns.parameters_str}}) = args;
         {{ implementation }}
     }

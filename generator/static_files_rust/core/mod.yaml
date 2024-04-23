@@ -2,7 +2,6 @@
 file_description: "Module for Packing static_files"
 implementations:
    - |
-    pub mod utils;
     pub mod simd_traits;
     pub use num_traits::Num as TSLArithmetic; // Definition as TSLArithmetic
 ...

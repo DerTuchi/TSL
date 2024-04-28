@@ -611,7 +611,6 @@ definitions:
       unsafe{_mm256_andnot_si256(
         _mm256_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, vec_b),
         _mm256_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, _mm256_min_{{ intrin_tp_full[ctype] }}(vec_a, vec_b)))}
-      
 #INTEL - SSE
   - target_extension: "sse"
     ctype: ["u8", "u16", "i32", "f32", "f64"]

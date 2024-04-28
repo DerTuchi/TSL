@@ -4,6 +4,117 @@ description: "Conversion primitives."
 ...
 ---
 primitive_name: "reinterpret"
+target_language: "rust"
+additional_simd_template_parameter:
+  name: "ToType"
+parameters:
+  - ctype: "Self::RegisterType"
+    name: "data"
+returns:
+  ctype: "<Self::AdditionalParam as TargetExtension>::RegisterType"
+  description: "Casted register."
+definitions:
+#INTEL - AVX2
+  - target_extension: "avx2"
+    ctype: ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "f32", "f64"]
+    additional_simd_template_base_type: ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "f32", "f64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["i8"]
+    additional_simd_template_base_type: ["u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["u8"]
+    additional_simd_template_base_type: ["i8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["i16"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["u16"]
+    additional_simd_template_base_type: ["i8", "u8", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["i32"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["u32"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["i64"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["u64"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64"]
+    lscpu_flags: ["avx"]
+    implementation: "data"
+  - target_extension: "avx2"
+    ctype: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_base_type: ["f32"]
+    lscpu_flags: ["avx"]
+    implementation: "unsafe{_mm256_castsi256_ps(data)}"
+  - target_extension: "avx2"
+    ctype: ["f32"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "unsafe{_mm256_castps_si256(data)}"
+  - target_extension: "avx2"
+    ctype: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_base_type: ["f64"]
+    lscpu_flags: ["avx"]
+    implementation: "unsafe{_mm256_castsi256_pd(data)}"
+  - target_extension: "avx2"
+    ctype: ["f64"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["avx"]
+    implementation: "unsafe{_mm256_castpd_si256(data)}"
+#INTEL - SSE
+  - target_extension: "sse"
+    ctype: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["sse"]
+    implementation: "data"
+  - target_extension: "sse"
+    ctype: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_base_type: ["f32"]
+    lscpu_flags: ["sse2"]
+    implementation: "unsafe{_mm_castsi128_ps(data)}"
+  - target_extension: "sse"
+    ctype: ["f32"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["sse2"]
+    implementation: "unsafe{_mm_castps_si128(data)}"
+  - target_extension: "sse"
+    ctype: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_base_type: ["f64"]
+    lscpu_flags: ["sse2"]
+    implementation: "unsafe{_mm_castsi128_pd(data)}"
+  - target_extension: "sse"
+    ctype: ["f64"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: ["sse2"]
+    implementation: "unsafe{_mm_castpd_si128(data)}"
+  #SCALAR
+  - target_extension: "scalar"
+    ctype: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_base_type: ["i8", "u8", "u16", "i16", "i32", "u32", "i64", "u64"]
+    lscpu_flags: []
+    implementation: "data"
+...
+---
+primitive_name: "reinterpret"
 additional_simd_template_parameter:
   name: "ToType"
 parameters:
@@ -151,6 +262,182 @@ definitions:
         result[i] = *reinterpret_cast< typename ToType::base_type const * >( &(data[i]) );
       }
       return result;
+...
+---
+primitive_name: "cast"
+target_language: "rust"
+additional_simd_template_parameter:
+  name: "ToType"
+parameters:
+  - ctype: "Self::RegisterType"
+    name: "data"
+returns:
+  ctype: "<Self::AdditionalParam as TargetExtension>::RegisterType"
+  description: "Casted SIMD register."
+definitions:
+  #INTEL - AVX2
+  - target_extension: "sse"
+    ctype: ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"]
+    additional_simd_template_extension: "avx2"
+    lscpu_flags: ["avx2"]
+    includes: ["crate::generated::extensions::simd::intel::avx2::avx2"]
+    is_native: True
+    implementation: unsafe{_mm256_zextsi128_si256(data)}
+  - target_extension: "scalar"
+    ctype: ["i32", "i64"]
+    additional_simd_template_extension: "sse"
+    lscpu_flags: ["sse2"]
+    is_native: True
+    includes: ["crate::generated::extensions::simd::intel::sse::sse", "std::arch::x86_64::*"]
+    implementation: unsafe{_mm_cvtsi{{ intrin_tp[ctype][1] }}_si128(data)}
+  - target_extension: "scalar"
+    ctype: ["u32", "u64"]
+    additional_simd_template_extension: "sse"
+    lscpu_flags: ["sse2"]
+    is_native: True
+    includes: ["crate::generated::extensions::simd::intel::sse::sse", "std::arch::x86_64::*"]
+    implementation: unsafe{_mm_cvtsi{{ intrin_tp[ctype][1] }}_si128(data as i{{intrin_tp[ctype][1]}})}
+# float -> int - AVX2
+  - target_extension: "avx2"
+    ctype: ["f32"]
+    additional_simd_template_base_type: ["i32", "u32"]
+    lscpu_flags: ['avx2']
+    implementation: unsafe{_mm256_cvtps_epi32(_mm256_round_ps(data, _MM_FROUND_TO_ZERO))}
+  - target_extension: "avx2"
+    ctype: ["f64"]
+    lscpu_flags: ["avx2", "sse"]
+    additional_simd_template_base_type: ["i64", "u64"]
+    implementation: unsafe{_mm256_cvtepi32_epi64(_mm_cvtps_epi32(_mm_round_ps(_mm256_cvtpd_ps(_mm256_round_pd(data, _MM_FROUND_TO_ZERO)), _MM_FROUND_TO_ZERO)))}
+# float -> int - SSE
+  - target_extension: "sse"
+    ctype: ["f32"]
+    additional_simd_template_base_type: ["i32", "u32"]
+    lscpu_flags: ['sse4_1', 'sse2']
+    implementation: unsafe{_mm_cvtps_epi32(_mm_round_ps(data, _MM_FROUND_TO_ZERO))}
+  - target_extension: "sse"
+    ctype: ["f64"]
+    additional_simd_template_base_type: ["i64", "u64"]
+    lscpu_flags: ['sse4_1', "sse2"]
+    implementation: unsafe{_mm_cvtepi32_epi64(_mm_cvtps_epi32(_mm_round_ps(_mm_cvtpd_ps(_mm_round_pd(data, _MM_FROUND_TO_ZERO)), _MM_FROUND_TO_ZERO)))}
+# float -> int - SCALAR
+  - target_extension: "scalar"
+    ctype: [ "f32", "f64"]
+    additional_simd_template_base_type_mapping_dict: {
+      "f32" : ["i32"], "f64" : ["i64"]
+    }
+    lscpu_flags: []
+    implementation: data as {{additional_simd_template_base_type_mapping_dict[ctype][0]}}
+# int -> float - AVX2
+  - target_extension: "avx2"
+    ctype: ["i32"]
+    additional_simd_template_base_type: ["f32"]
+    lscpu_flags: ['avx']
+    implementation: unsafe{_mm256_cvtepi32_ps(data)}
+  - target_extension: "avx2"
+    ctype: ["u32"]
+    additional_simd_template_base_type: ["f32"]
+    lscpu_flags: ['avx', 'avx2']
+    implementation: |
+      unsafe{ 
+      let output = _mm256_cvtepi32_ps(data);
+      let mask = _mm256_srai_epi32(data, 31);
+      let correction = _mm256_castsi256_ps(_mm256_and_si256(mask, _mm256_set1_epi32(0x4f800000 as i32)));
+      
+      _mm256_add_ps(output, correction)}
+  - target_extension: "avx2"
+    ctype: ["u64"]
+    is_native: false
+    additional_simd_template_base_type: ["f64"]
+    lscpu_flags: ['avx', 'avx2']
+    implementation: |
+      // https://stackoverflow.com/a/41223013
+      unsafe{
+      let magic_i_lo   = _mm256_set1_epi64x(0x4330000000000000);                /* 2^52               encoded as floating-point  */
+      let magic_i_hi32 = _mm256_set1_epi64x(0x4530000080000000);                /* 2^84 + 2^63        encoded as floating-point  */
+      let magic_i_all  = _mm256_set1_epi64x(0x4530000080100000);                /* 2^84 + 2^63 + 2^52 encoded as floating-point  */
+      let magic_d_all  = _mm256_castsi256_pd(magic_i_all);
+
+      let v_lo         = _mm256_blend_epi32(magic_i_lo, data, 0b01010101);      /* Blends the 32 lowest significant bits of v with magic_int_lo                            */
+      let mut v_hi         = _mm256_srli_epi64(data, 32);                           /* Extract the 32 most significant bits of v                                              */
+          v_hi         = _mm256_xor_si256(v_hi, magic_i_hi32);                  /* Flip the msb of v_hi and blends with 0x45300000                                         */
+      let v_hi_dbl     = _mm256_sub_pd(_mm256_castsi256_pd(v_hi), magic_d_all); /* Compute in double precision:                                                           */
+      _mm256_add_pd(v_hi_dbl, _mm256_castsi256_pd(v_lo))}                       /* (v_hi - magic_d_all) + v_lo  Do not assume associativity of floating point addition !! */
+  - target_extension: "avx2"
+    ctype: ["u64"]
+    is_native: "false"
+    additional_simd_template_base_type: ["f64"]
+    lscpu_flags: ['avx', 'avx2']
+    implementation: |
+      // https://stackoverflow.com/a/41223013
+      unsafe{
+      let magic_i_lo   = _mm256_set1_epi64x(0x4330000000000000);                /* 2^52        encoded as floating-point  */
+      let magic_i_hi32 = _mm256_set1_epi64x(0x4530000000000000);                /* 2^84        encoded as floating-point  */
+      let magic_i_all  = _mm256_set1_epi64x(0x4530000000100000);                /* 2^84 + 2^52 encoded as floating-point  */
+      let magic_d_all  = _mm256_castsi256_pd(magic_i_all);
+
+      let v_lo         = _mm256_blend_epi32(magic_i_lo, data, 0b01010101);      /* Blends the 32 lowest significant bits of v with magic_int_lo                                                   */
+      let mut v_hi         = _mm256_srli_epi64(data, 32);                           /* Extract the 32 most significant bits of v                                                                     */
+              v_hi         = _mm256_xor_si256(v_hi, magic_i_hi32);                  /* Blends v_hi with 0x45300000                                                                                    */
+      let v_hi_dbl     = _mm256_sub_pd(_mm256_castsi256_pd(v_hi), magic_d_all); /* Compute in double precision:                                                                                  */
+      _mm256_add_pd(v_hi_dbl, _mm256_castsi256_pd(v_lo))}    /* (v_hi - magic_d_all) + v_lo  Do not assume associativity of floating point addition !!                        */
+# int -> float - SSE
+  - target_extension: "sse"
+    ctype: [ "i32" ]
+    additional_simd_template_base_type: ["f32"]
+    lscpu_flags: ['sse2']
+    implementation: unsafe{_mm_cvtepi32_ps(data)}
+  - target_extension: "sse"
+    ctype: [ "u32"]
+    additional_simd_template_base_type: ["f32"]
+    lscpu_flags: ['sse2']
+    implementation: |
+      unsafe{
+      let temp = _mm_cvtepi32_ps(data);
+
+      let mask = _mm_srai_epi32(data, 31);
+      let correction = _mm_castsi128_ps(_mm_and_si128(mask, _mm_set1_epi32(0x4f800000 as i32)));
+
+      _mm_add_ps(temp, correction)}
+  - target_extension: "sse"
+    ctype: [ "u64" ]
+    additional_simd_template_base_type: ["f64"]
+    includes: ["std::mem"]
+    lscpu_flags: ['sse2', 'sse4_1']
+    implementation: |
+      unsafe{
+      let value: u64 = 0x0010000000000000;
+      let magic_no: f64 = mem::transmute(value);
+      // https://stackoverflow.com/a/41148578
+      let mut xH = _mm_srai_epi32(data, 16);
+      xH = _mm_blend_epi16(xH, _mm_setzero_si128(), 0x33);
+      xH = _mm_add_epi64(xH, _mm_castpd_si128(_mm_set1_pd(442721857769029238784.)));                //  3*2^67
+      let xL = _mm_blend_epi16(data, _mm_castpd_si128(_mm_set1_pd(magic_no)), 0x88);  //  2^52
+      let f = _mm_sub_pd(_mm_castsi128_pd(xH), _mm_set1_pd(442726361368656609280.));            //  3*2^67 + 2^52
+      _mm_add_pd(f, _mm_castsi128_pd(xL))}
+  - target_extension: "sse"
+    ctype: [ "u64" ]
+    additional_simd_template_base_type: ["f64"]
+    lscpu_flags: ['sse2', 'sse4_1']
+    includes: ["std::mem"]
+    implementation: |
+      unsafe{
+      let value: u64 = 0x0010000000000000;
+      let magic_no: f64 = mem::transmute(value);
+      // https://stackoverflow.com/a/41148578
+      let mut xH = _mm_srli_epi64(data, 32);
+      xH = _mm_or_si128(xH, _mm_castpd_si128(_mm_set1_pd(19342813113834066795298816.)));            //  2^84
+      let xL = _mm_blend_epi16(data, _mm_castpd_si128(_mm_set1_pd(magic_no)), 0xcc);  //  2^52
+      let f = _mm_sub_pd(_mm_castsi128_pd(xH), _mm_set1_pd(19342813118337666422669312.));       //  2^84 + 2^52
+      _mm_add_pd(f, _mm_castsi128_pd(xL))}
+# int -> float - SCALAR
+  - target_extension: "scalar"
+    ctype: [ "u32", "u64", "i32", "i64"]
+    additional_simd_template_base_type_mapping_dict: {
+      "u32" : ["f32"], "i32" : ["f32"],
+      "u64" : ["f64"], "i64" : ["f64"]
+    }
+    lscpu_flags: []
+    implementation: data as {{additional_simd_template_base_type_mapping_dict[ctype][0]}}
 ...
 ---
 primitive_name: "cast"

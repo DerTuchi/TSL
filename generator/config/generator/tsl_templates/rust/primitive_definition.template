@@ -56,28 +56,37 @@
    {% endif %}
 {% endfor %}
 {% if additional_simd_template_parameter["name"] != "" %}
-    {% if additional_simd_template_extension != "" %}
-        {% set ns.additional_template_params = ns.additional_template_params ~ additional_simd_template_extension ~ ', ' %}
-        {% set ns.additional_target_extension = additional_simd_template_extension %}
+    {% if additional_simd_template_extension != "" and additional_simd_template_base_type != "" %}
+        {% set temp = additional_simd_template_extension ~ '<' ~ additional_simd_template_base_type ~ '>' %}
+        {% set ns.additional_template_params = ns.additional_template_params ~ temp ~ ', ' %}
+        {% set ns.additional_target_extension = temp %}
+    {% elif additional_simd_template_extension != "" %}
+        {% set temp = additional_simd_template_extension ~ '<' ~ ctype ~ '>' %}
+        {% set ns.additional_template_params = ns.additional_template_params ~ temp ~ ', ' %}
+        {% set ns.additional_target_extension = temp %}
     {% else %}
-        {% set ns.additional_target_extension = target_extension %}
+        {% set temp = target_extension ~ '<' ~ additional_simd_template_base_type ~ '>' %}
+        {% set ns.additional_template_params = ns.additional_template_params ~ temp ~ ', ' %}
+        {% set ns.additional_target_extension = temp %}
     {% endif %}
     {% set ns.using_return_type = 'using ' ~ additional_simd_template_parameter["name"] ~ ' = simd<' ~ additional_simd_template_base_type ~ ', ' ~ ns.additional_target_extension ~ ns.simd_register_length ~ '>;' %}
     {% set ns.return_template_type = 'simd<' ~ additional_simd_template_base_type ~ ', ' ~ ns.additional_target_extension ~ ns.simd_register_length ~ '>, ' %}
 {% endif %}
+{% set ns.additional_templates = '< const Idof: bool ' %}
 {% if additional_non_specialized_template_parameters|length > 0 %}
 {% for parameter_dict in additional_non_specialized_template_parameters %}
 {% set loop_comma = '' if loop.first else ', ' %}
 {% set ns.additional_templates = ns.additional_templates ~ loop_comma ~ 'const ' ~ parameter_dict["name"] ~ ' : ' ~ parameter_dict["ctype"] %}
 {% set ns.additional_template_params = ns.additional_template_params ~ loop_comma ~ parameter_dict["name"] %}
 {% endfor %}
-{% set ns.additional_templates = '<' ~ ns.additional_templates ~ '>' %}
 {% set ns.additional_template_params = ns.additional_template_params ~ ", " %}
 {% endif %}
+{% set ns.additional_templates = ns.additional_templates ~ '>' %}
+{% set check = '()' if not is_native else 'assert!(Self::is_native == Idof, , "The primitive {{ functor_name }} is not supported by your hardware natively while it is forced by using native");'%}
 {# Every implementation is in the (nested) namespace "details" #}
 
 {{ '' if is_native else '#[cfg(feature = "workaround")]' }}
-impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<{{ns.additional_template_params}}{{ ns.full_extension_name }}> {
+impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<Idof, {{ns.additional_template_params}}{{ ns.full_extension_name }}> {
     /**
      * @brief: Template specialization of implementation for "{{ functor_name }}" (primitive {{ primitive_name }}).
      * @details:
@@ -94,9 +103,7 @@ impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<{{ns.ad
 
     type BaseType = {{ctype}};
     type TargetExtension = {{ns.full_extension_name}};
-    {% if additional_simd_template_parameter["name"] != "" %}
-    type AdditionalParam = {{ns.additional_target_extension}};
-    {% endif %}
+    type AdditionalParam = {{ ns.additional_target_extension if additional_simd_template_parameter["name"] != "" else '()' }};
     type RegisterType = <Self::TargetExtension as TargetExtension>::RegisterType;
     type ImaskType = <Self::TargetExtension as TargetExtension>::ImaskType;
     type MaskType = <Self::TargetExtension as TargetExtension>::MaskType;
@@ -104,6 +111,12 @@ impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<{{ns.ad
     type OffsetBaseRegisterType = <Self::TargetExtension as TargetExtension>::OffsetBaseRegisterType;
     type Args = ({{ns.parameters_types}});
     type ReturnType = {{ returns['ctype'] }};
+    const is_native: bool = {{ 'true;' if is_native else 'false;' }}
+    {% if not is_native %}
+    const check: () = assert!(Self::is_native == Idof, "The primitive '{{ functor_name }}' is not supported by your hardware natively while it is forced by using native");
+    {% else %}
+    const check: () = ();
+    {% endif %}
 
     fn parameters_queryable() -> bool{
         return {{ 'true' if ns.has_parameters_tuple else 'false' }};
@@ -116,9 +129,10 @@ impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<{{ns.ad
         return {{ 'true;' if is_native else 'false;' }}
     }
 
-    {{ '#[must_use] ' if returns['ctype'] != 'None' else ''}}{{ '' if is_native else '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
+    {{ '#[must_use] ' if returns['ctype'] != 'None' else ''}}
     {{ '#[inline(always)]' if force_inline else '' }}
     fn apply(args: Self::Args) -> Self::ReturnType{
+        let _ = Self::check;
         let ({{ns.parameters_str}}) = args;
         {{ implementation }}
     }

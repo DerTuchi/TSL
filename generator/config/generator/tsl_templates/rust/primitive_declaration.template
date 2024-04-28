@@ -45,7 +45,7 @@
 {% endif %}
 {% if additional_simd_template_parameter["name"] != "" %}
 {% set tp_type = 'TargetExtension' if additional_parameter_type else 'TSLArithmetic'%}
-{% set ns.additional_template_type_name = additional_simd_template_parameter["name"] ~ ' : ' ~ tp_type ~ ', ' %}
+{% set ns.additional_template_type_name = additional_simd_template_parameter["name"] ~ ' : ' ~ 'TargetExtension, ' %}
 {% set ns.additional_template_params_with_defaults = 'typename ' ~ additional_simd_template_parameter["name"] %}
 {% set ns.phantomdata = 'pub PhantomData<'~ additional_simd_template_parameter["name"] ~ '>, '%}
 {% if additional_simd_template_parameter["default_value"] != "" %}
@@ -72,4 +72,4 @@
 {% endif %}
 {# Every implementation is in the (nested) namespace "functors" #}
 {# This is the forward declaration of the actual primitive implementation struct #}
-pub struct {{ functor_name }}<{{ ns.additional_template_type_name }}T: TargetExtension>({{ns.phantomdata}}pub PhantomData<T>);
+pub struct {{ functor_name }}<const Idof: bool, {{ ns.additional_template_type_name }}T: TargetExtension>({{ns.phantomdata}}pub PhantomData<T>);

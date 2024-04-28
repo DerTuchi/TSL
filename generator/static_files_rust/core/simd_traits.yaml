@@ -9,12 +9,14 @@ implementations:
       type ReturnType;
       type BaseType;
       type TargetExtension;
-      type AdditionalParam = (); //empty initialization for implementations that dont need it
+      type AdditionalParam;
       type RegisterType;
       type ImaskType;
       type MaskType;
       type OffsetBaseType;
       type OffsetBaseRegisterType;
+      const is_native: bool;
+      const check: ();
 
       fn parameters_queryable() -> bool;
       fn has_return_value() -> bool;

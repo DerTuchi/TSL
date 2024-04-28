@@ -115,7 +115,7 @@ impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<Idof, {
     {% if not is_native %}
     const check: () = assert!(Self::is_native == Idof, "The primitive '{{ functor_name }}' is not supported by your hardware natively while it is forced by using native");
     {% else %}
-    const check: () = ();
+    const check: () = (); // function is native so no check for Idof needed.
     {% endif %}
 
     fn parameters_queryable() -> bool{

@@ -486,6 +486,48 @@ definitions:
       }
 ...
 ---
+primitive_name: "mask_gather"
+target_language: "rust"
+brief_description: "If mask[i] is 1, load memory[index[i] * scale], otherwise use source[i]"
+additional_non_specialized_template_parameters:
+  - ctype: "i32"
+    name: "N"
+parameters:
+  - ctype: "Self::MaskType"
+    name: "mask"
+    description: "Mask indicating which lanes should be gathered."
+  - ctype: "Self::RegisterType"
+    name: "source"
+    description: "Vector register containing values which should be preserved depending on the mask (if mask[i] == 0)."
+  - ctype: "*const Self::BaseType"
+    name: "memory"
+    description: "(Start)pointer of the memory (which is used as base for address calculation)."
+  - ctype: "Self::OffsetBaseRegisterType"
+    name: "index"
+    description: "Offsets array containing simd<offset_t, EXTENSION> register_types containing relative offsets to the start pointer (the number of array elements depend on the sizeof(offset_type)/sizeof(base_type) ratio, where sizeof(offset_type) should be 8)."
+returns:
+  ctype: "Self::RegisterType"
+  description: "Vector containing gathered data."
+definitions:
+  #INTEL - AVX2
+  - target_extension: "avx2"
+    ctype: ["i64", "i32"]
+    lscpu_flags: ["avx2"]
+    implementation: "_mm256_mask_i{{intrin_tp[ctype][1]}}gather_{{intrin_tp_full[ctype]}}(source, memory, index, mask, N)"
+  - target_extension: "avx2"
+    ctype: ["u64", "u32"]
+    lscpu_flags: ["avx2"]
+    implementation: "_mm256_mask_i{{intrin_tp[ctype][1]}}gather_epi{{intrin_tp[ctype][1]}}(source, memory as *const i{{intrin_tp[ctype][1]}}, index, mask, N)"
+  - target_extension: "avx2"
+    ctype: ["f32"]
+    lscpu_flags: ["avx2"]
+    implementation: "_mm256_mask_i32gather_ps(source, memory, index, mask, N)"
+  - target_extension: "avx2"
+    ctype: ["f64"]
+    lscpu_flags: ["avx2"]
+    implementation: "_mm256_mask_i64gather_pd(source, memory, index, mask, N)"
+...
+---
 primitive_name: "gather"
 functor_name: "mask_gather"
 additional_simd_template_parameter:

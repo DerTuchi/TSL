@@ -279,6 +279,52 @@ definitions:
       return result;
 ...
 ---
+primitive_name: "mask_add"
+target_language: "rust"
+brief_description: "Adds two vector registers, depending on a mask: result[*] = (m[*])? vec_a[*]+vec_b[*] : vec_a[*]."
+parameters:
+  - ctype: "Self::MaskType"
+    name: "mask"
+    description: "Vector mask register indicating which elements should be added."
+  - ctype: "Self::RegisterType"
+    name: "vec_a"
+    description: "First vector."
+  - ctype: "Self::RegisterType"
+    name: "vec_b"
+    description: "Second vector."
+returns:
+  ctype: "Self::RegisterType"
+  description: "Vector containing result of the addition."
+definitions:
+#INTEL - AVX2
+  - target_extension: "avx2"
+    ctype: ["u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"]
+    lscpu_flags: ["avx"]
+    implementation: "_mm256_add_epi{{ intrin_tp[ctype][1] }}(vec_a, _mm256_and_si256(vec_b, mask))"
+  - target_extension: "avx2"
+    ctype: ["f32", "f64"]
+    lscpu_flags: ["avx"]
+    implementation: "_mm256_add_{{ intrin_tp_full[ctype] }}(vec_a, _mm256_and_{{ intrin_tp_full[ctype] }}(vec_b, mask))"
+#INTEL - SSE
+  - target_extension: "sse"
+    ctype: ["u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"]
+    lscpu_flags: ["sse2"]
+    implementation: "_mm_add_epi{{ intrin_tp[ctype][1] }}(vec_a, _mm_and_si128(vec_b, mask))"
+  - target_extension: "sse"
+    ctype: ["f32"]
+    lscpu_flags: ["sse"]
+    implementation: "_mm_add_ps(vec_a, _mm_and_ps(vec_b, mask))"
+  - target_extension: "sse"
+    ctype: ["f64"]
+    lscpu_flags: ["sse2"]
+    implementation: "_mm_add_pd(vec_a, _mm_and_pd(vec_b, mask))"
+#SCALAR
+  - target_extension: "scalar"
+    ctype: ["u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64", "f32", "f64"]
+    lscpu_flags: []
+    implementation: "if mask { vec_a + vec_b } else { vec_a }"
+...
+---
 primitive_name: "add"
 functor_name: "mask_add"
 brief_description: "Adds two vector registers, depending on a mask: result[*] = (m[*])? vec_a[*]+vec_b[*] : vec_a[*]."

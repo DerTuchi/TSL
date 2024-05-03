@@ -26,7 +26,7 @@ def tsl_setup(file_config, additional_config=None) -> None:
 if __name__ == '__main__':
     st = time.time()
     os.chdir(Path(os.path.realpath(__file__)).parent)
-    file_config = get_config(Path("generator/config/default_conf_rust.yaml")) # Change here the config for target_language
+    file_config = get_config(Path("generator/config/default_conf.yaml")) # Change here the config for target_language
     args_dict = parse_args(known_types = file_config["configuration"]["relevant_types"])
     tsl_setup(file_config, args_dict)
 

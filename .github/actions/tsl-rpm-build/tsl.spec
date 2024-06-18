@@ -1,6 +1,6 @@
 Name:           libtsl-dev
 Version:        ${{ VERSION_TAG }}
-Release:        1
+Release:        ${{ RELEASE_TAG }}
 Summary:        Template SIMD Library (TSL) is an open-source C++ library for SIMD programming. It provides a comprehensive collection of SIMD intrinsics and high-level interfaces to exploit the full power of SIMD hardware.
 BuildArch:      noarch
 
@@ -37,16 +37,23 @@ while read -r line1 && read -r line2; do
     UNKNOWN_PATH=$TSL_PATH
   fi
   COUNTER=0
+  FOUND_ALL_FLAGS=1
   for i in "${!TSL_FLAGS_ARR[@]}"
   do
+    FOUND_FLAG=0
     for j in "${!AVAIL_FLAGS[@]}"
     do
       if [ "${TSL_FLAGS_ARR[i]}" == "${AVAIL_FLAGS[j]}" ]; then
+        FOUND_FLAG=1
         COUNTER=$((COUNTER+1))
       fi
     done
+    if [ $FOUND_FLAG -eq 0 ]; then
+      FOUND_ALL_FLAGS=0
+      break
+    fi
   done
-  if [ $COUNTER -gt $MAX_AVAIL_FLAGS ]; then
+  if [ $COUNTER -gt $MAX_AVAIL_FLAGS ] && [ $FOUND_ALL_FLAGS -eq 1 ]; then
     MAX_AVAIL_FLAGS=$COUNTER
     CHOSEN_TSL_PATH=${TSL_PATH}
   fi

@@ -15,12 +15,11 @@ implementations:
       type MaskType;
       type OffsetBaseType;
       type OffsetBaseRegisterType;
-      const is_native: bool;
-      const check: ();
+      const IS_NATIVE: bool;
+      const PARAMETERS_QUERYABLE : bool;
+      const HAS_RETURN_VALUE : bool;
+      const CHECK: ();
 
-      fn parameters_queryable() -> bool;
-      fn has_return_value() -> bool;
-      fn native_supported() -> bool;
       unsafe fn apply(args: Self::Args) -> Self::ReturnType;
     }
 

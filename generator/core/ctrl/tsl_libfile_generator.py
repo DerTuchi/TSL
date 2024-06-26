@@ -224,14 +224,14 @@ class TSLFileGenerator:
             include_order_dict = {prefix: index for index, prefix in enumerate(sorted_classes_prefix)}
             include_sort_fun = lambda x: [include_order_dict[ref] for ref in sorted_classes_prefix if x.file_name.stem.startswith(ref)]
 
-            generated_files_root: TSLHeaderFile = TSLHeaderFile.create_from_dict(config.lib_generated_files_root_header, {})
-            for extension_file in self.extension_files:
-                generated_files_root.add_file_include(extension_file)
-            # for primitive_declaration in self.__sort_header_files(ordered_primitive_classes, list(self.primitive_declaration_files)):
-            for primitive_declaration in sorted(self.primitive_declaration_files, key=include_sort_fun):
-                generated_files_root.add_file_include(primitive_declaration)
-            for primitive_definition in sorted(self.primitive_definition_files, key=include_sort_fun):
-                generated_files_root.add_file_include(primitive_definition)
-            for runtime_header in lib.relevant_runtime_headers:
-                generated_files_root.add_predefined_tsl_file_include(f'"{runtime_header.name}"')
-            self.__static_files.append(generated_files_root)
+        generated_files_root: TSLHeaderFile = TSLHeaderFile.create_from_dict(config.lib_generated_files_root_header, {})
+        for extension_file in self.extension_files:
+            generated_files_root.add_file_include(extension_file)
+        # for primitive_declaration in self.__sort_header_files(ordered_primitive_classes, list(self.primitive_declaration_files)):
+        for primitive_declaration in sorted(self.primitive_declaration_files, key=include_sort_fun):
+            generated_files_root.add_file_include(primitive_declaration)
+        for primitive_definition in sorted(self.primitive_definition_files, key=include_sort_fun):
+            generated_files_root.add_file_include(primitive_definition)
+        #for runtime_header in lib.relevant_runtime_headers:
+        #    generated_files_root.add_predefined_tsl_file_include(f'"{runtime_header.name}"')
+        self.__static_files.append(generated_files_root)

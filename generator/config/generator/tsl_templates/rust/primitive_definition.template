@@ -2,18 +2,16 @@
     {{ None['[ERROR] ' ~ error][0] }}
 {% endmacro %}
 {% if vector_length_agnostic and vector_length_bits != 0 %}
-{{ abort("A specialization can be either vector length agnostig or have a vector-length-dependent specialization.") }}
+    {{ abort("A specialization can be either vector length agnostic or have a vector-length-dependent specialization.") }}
 {% endif %}
 {% set ns = namespace(
-   full_extension_name = '',
+   full_extension_name='',
    partial_specialized=False,
-   contains_template_parameter=False,
    contains_parameter_pack=False,
    parameter_pack_typenames_str='',
    full_qualified_parameters_str='',
    parameters_str='',
    parameters_types='',
-   has_parameters_tuple=True,
    using_return_type='',
    return_template_type='',
    additional_templates='',
@@ -21,39 +19,27 @@
    additional_specialized_template_params='',
    additional_target_extension='',
    additional_default_param='',
-   simd_register_length='') %}
+   simd_register_length=''
+) %}
 {% set ns.full_extension_name = target_extension ~ '<' ~ ctype ~ '>' %}
 {% if ctype == 'T' %}
-{% set ns.partial_specialized = True %}
+    {% set ns.partial_specialized = True %}
 {% endif %}
 {% for param in parameters %}
-   {% if not loop.last %}
-      {% set comma = ', ' %}
-   {% else %}
-      {% set comma = '' %}
-   {% endif %}
-   {% if 'is_parameter_pack' in param and param['is_parameter_pack'] %}
-      {% set ns.contains_parameter_pack = True %}
-      {% set ns.parameter_pack_typenames_str = ns.parameter_pack_typenames_str ~ 'typename... ' ~ param['ctype'] ~ comma %}
-      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ param['ctype'] ~ '... ' ~ param['name'] ~ comma %}
-      {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ '...' ~ comma %}
-      {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ '... ' ~ comma %}
-      {% set ns.has_parameters_tuple = False %}
-   {% else %}
-      {% if 'declaration_attributes' not in param or param['declaration_attributes'] == "" %}
-      {% set decl_attribs = '' %}
-      {% else %}
-      {% set decl_attribs = param['declaration_attributes'] ~ ' ' %}
-      {% endif %}
-      {% if 'attributes' not in param or param['attributes'] == "" %}
-      {% set attribs = ' ' %}
-      {% else %}
-      {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
-      {% endif %}
-      {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype ~ comma %}
-      {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
-      {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
-   {% endif %}
+    {% set comma = ', ' if not loop.last else '' %}
+    {% if param.get('is_parameter_pack', False) %}
+        {% set ns.contains_parameter_pack = True %}
+        {% set ns.parameter_pack_typenames_str = ns.parameter_pack_typenames_str ~ 'typename... ' ~ param['ctype'] ~ comma %}
+        {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ param['ctype'] ~ '... ' ~ param['name'] ~ comma %}
+        {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ '...' ~ comma %}
+        {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ '... ' ~ comma %}
+    {% else %}
+        {% set decl_attribs = param['declaration_attributes'] ~ ' ' if param.get('declaration_attributes') else '' %}
+        {% set attribs = ' ' ~ param['attributes'] ~ ' ' if param.get('attributes') else ' ' %}
+        {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype ~ comma %}
+        {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
+        {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
+    {% endif %}
 {% endfor %}
 {% if additional_simd_template_parameter["name"] != "" %}
     {% if additional_simd_template_extension != "" and additional_simd_template_base_type != "" %}
@@ -80,20 +66,19 @@
 {% endif %}
 {% set ns.additional_templates = '< const Idof: bool ' %}
 {% if additional_non_specialized_template_parameters|length > 0 %}
-{% set ns.additional_templates = ns.additional_templates ~ ', ' %}
-{% for parameter_dict in additional_non_specialized_template_parameters %}
-{% set loop_comma = '' if loop.first else ', ' %}
-{% set ns.additional_templates = ns.additional_templates ~ loop_comma ~ 'const ' ~ parameter_dict["name"] ~ ' : ' ~ parameter_dict["ctype"] %}
-{% if parameter_dict["default_value"] != "" %}
-{% set ns.additional_default_param = ns.additional_default_param ~ ', ' ~ parameter_dict["name"] %}
-{% else %}
-{% set ns.additional_non_specialized_template_params = ns.additional_non_specialized_template_params ~ loop_comma ~ parameter_dict["name"] %}
-{% endif %}
-{% endfor %}
-{% set ns.additional_non_specialized_template_params = ns.additional_non_specialized_template_params ~ ", " %}
+    {% set ns.additional_templates = ns.additional_templates ~ ', ' %}
+    {% for parameter_dict in additional_non_specialized_template_parameters %}
+        {% set loop_comma = '' if loop.first else ', ' %}
+        {% set ns.additional_templates = ns.additional_templates ~ loop_comma ~ 'const ' ~ parameter_dict["name"] ~ ' : ' ~ parameter_dict["ctype"] %}
+        {% if parameter_dict["default_value"] != "" %}
+            {% set ns.additional_default_param = ns.additional_default_param ~ ', ' ~ parameter_dict["name"] %}
+        {% else %}
+            {% set ns.additional_non_specialized_template_params = ns.additional_non_specialized_template_params ~ loop_comma ~ parameter_dict["name"] %}
+        {% endif %}
+    {% endfor %}
+    {% set ns.additional_non_specialized_template_params = ns.additional_non_specialized_template_params ~ ", " %}
 {% endif %}
 {% set ns.additional_templates = ns.additional_templates ~ '>' %}
-{% set check = '()' if not is_native else 'assert!(Self::is_native == Idof, , "The primitive {{ functor_name }} is not supported by your hardware natively while it is forced by using native");'%}
 {# Every implementation is in the (nested) namespace "details" #}
 
 impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<Idof, {{ns.additional_non_specialized_template_params}}{{ ns.full_extension_name }}{{ns.additional_specialized_template_params}}{{ns.additional_default_param}}> {
@@ -122,7 +107,7 @@ impl{{ns.additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<Idof, {
     type Args = ({{ns.parameters_types}});
     type ReturnType = {{ '()' if returns['ctype'] == 'void' else returns['ctype']}};
     const IS_NATIVE: bool = {{ 'true;' if is_native else 'false;' }}
-    const PARAMETERS_QUERYABLE : bool = {{ 'true' if ns.has_parameters_tuple else 'false' }};
+    const PARAMETERS_QUERYABLE : bool = {{ 'true' if ns.contains_parameter_pack else 'false' }};
     const HAS_RETURN_VALUE : bool = {{ 'true' if returns['ctype'] != 'void' else 'false' }};
     {% if not is_native %}
     const CHECK: () = assert!(Self::is_native == Idof, "The primitive '{{ functor_name }}' is not supported by your hardware natively while it is forced by using native");

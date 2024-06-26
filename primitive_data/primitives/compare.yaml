@@ -611,6 +611,28 @@ definitions:
       _mm256_andnot_si256(
       _mm256_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, vec_b),
       _mm256_cmpeq_epi{{ intrin_tp[ctype][1] }}(vec_a, _mm256_min_{{ intrin_tp_full[ctype] }}(vec_a, vec_b)))
+  - target_extension: "avx2"
+    ctype: ["u64"]
+    lscpu_flags: ['avx2']
+    implementation: |
+      let lower_32_bit = _mm256_srli_epi64(_mm256_cmpeq_epi64(_mm256_setzero_si256(), _mm256_setzero_si256()), 32);
+      let upper_vec_a = _mm256_srli_epi64(vec_a, 32);
+      let upper_vec_b = _mm256_srli_epi64(vec_b, 32);
+      let lower_vec_a = _mm256_and_si256(vec_a, lower_32_bit);
+      let lower_vec_b = _mm256_and_si256(vec_b, lower_32_bit);
+
+      let upper_vec_a_lt_upper_vec_b = _mm256_cmpeq_epi64(upper_vec_a, _mm256_and_si256(lower_32_bit, _mm256_min_epu32(upper_vec_a, upper_vec_b)));
+      let lower_vec_a_lt_lower_vec_b = _mm256_cmpeq_epi64(lower_vec_a, _mm256_and_si256(lower_32_bit, _mm256_min_epu32(lower_vec_a, lower_vec_b)));
+      let upper_vec_a_eq_upper_vec_b = _mm256_cmpeq_epi64(upper_vec_a, upper_vec_b);
+      let lower_vec_a_eq_lower_vec_b = _mm256_cmpeq_epi64(lower_vec_a, lower_vec_b);
+
+      _mm256_andnot_si256(
+          _mm256_and_si256(upper_vec_a_eq_upper_vec_b, lower_vec_a_eq_lower_vec_b),
+          _mm256_andnot_si256(
+              _mm256_andnot_si256(lower_vec_a_lt_lower_vec_b, upper_vec_a_eq_upper_vec_b),
+              upper_vec_a_lt_upper_vec_b
+          )
+      )
 #INTEL - SSE
   - target_extension: "sse"
     ctype: ["u8", "u16", "i32", "f32", "f64"]

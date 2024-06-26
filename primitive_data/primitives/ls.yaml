@@ -532,7 +532,7 @@ definitions:
     lscpu_flags: ["avx"]
     implementation: "_mm256_set1_epi{{ intrin_tp[ctype][1] }}x(value)"
   - target_extension: "avx2"
-    ctype: ["i64"]
+    ctype: ["u64"]
     lscpu_flags: ["avx"]
     implementation: "_mm256_set1_epi{{ intrin_tp[ctype][1] }}x(value as i{{intrin_tp[ctype][1]}})"
   - target_extension: "avx2"

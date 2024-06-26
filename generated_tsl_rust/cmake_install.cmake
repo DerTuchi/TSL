@@ -1,4 +1,4 @@
-# Install script for directory: /home/tucholke/TSL
+# Install script for directory: /home/tucholke/bachelorarbeit/TSL
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/tucholke/TSL/generated_tsl_cpp/generator_output/build/cmake_install.cmake")
+  include("/home/tucholke/bachelorarbeit/TSL/generated_tsl_rust/generator_output/build/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -55,5 +55,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/tucholke/TSL/generated_tsl_cpp/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/tucholke/bachelorarbeit/TSL/generated_tsl_rust/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

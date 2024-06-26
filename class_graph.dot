@@ -1,22 +1,22 @@
 strict digraph  {
-calc;
-convert;
 ls;
-mask_ls;
-compare;
 misc;
 mask;
+binary;
 memory;
 io;
-binary;
-convert -> calc;
-ls -> calc;
+mask_ls;
+convert;
+calc;
+compare;
 ls -> misc;
-ls -> mask_ls;
 ls -> mask;
 ls -> binary;
-mask_ls -> calc;
-mask_ls -> compare;
+ls -> mask_ls;
+ls -> calc;
 mask -> misc;
 mask -> mask_ls;
+mask_ls -> calc;
+mask_ls -> compare;
+convert -> calc;
 }

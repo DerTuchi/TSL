@@ -1,9 +1,10 @@
-{% set ns = namespace(
-   default_vector_size=0) %}
+
+{% set ns_default_vector_size = 0 %}
+
 {% if simdT_default_size_in_bits == 0 %}
-   {% set ns.default_vector_size = "std::mem::size_of::<T>()*8" %}
+   {% set ns_default_vector_size = "std::mem::size_of::<BaseType>*8" %}
 {% else %}
-   {% set ns.default_vector_size = simdT_default_size_in_bits %}
+   {% set ns_default_vector_size = simdT_default_size_in_bits %}
 {% endif %}
 // Trait to select {{ extension_name }} register_type
 pub trait SelectRegister{{ extension_name }} {
@@ -68,7 +69,7 @@ where
     T : TSLArithmetic + SelectRegister{{ extension_name }} + SelectImask{{ extension_name }} + SelectOffsetBaseType,
         <T as SelectOffsetBaseType>::Output: SelectRegister{{ extension_name }}
 {
-    const DEFAULT_SIZE_IN_BITS : usize = {{ns.default_vector_size}};
+    const DEFAULT_SIZE_IN_BITS : usize = {{ns_default_vector_size}};
 
     pub const fn vector_size_b() -> usize{
         Self::DEFAULT_SIZE_IN_BITS

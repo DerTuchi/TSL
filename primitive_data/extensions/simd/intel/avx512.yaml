@@ -26,7 +26,7 @@ simdT_mask_type: |-
                         )
                      ),
                      TSL_DEP_TYPE(
-                        ( VectorSizeInBits == 256 ),
+                        ( VectorSizeInBits == 512 ),
                         TSL_DEP_TYPE(
                            ( sizeof( BaseType ) ) == 1,
                            __mmask32,
@@ -43,7 +43,14 @@ simdT_mask_type: |-
                         )
                      )
                   )
-intrin_tp: {uint8_t: ["epu", 8], uint16_t: ["epu", 16], uint32_t: ["epu", 32], uint64_t: ["epu", 64], int8_t: ["epi", 8], int16_t: ["epi", 16], int32_t: ["epi", 32], int64_t: ["epi", 64], float: ["p", "s"], double: ["p", "d"]}
-intrin_tp_full: {uint8_t: "epu8", uint16_t: "epu16", uint32_t: "epu32", uint64_t: "epu64", int8_t: "epi8", int16_t: "epi16", int32_t: "epi32", int64_t: "epi64", float: "ps", double: "pd"}
+intrin_tp: {uint8_t: ["epu", 8], uint16_t: ["epu", 16], uint32_t: ["epu", 32], uint64_t: ["epu", 64], int8_t: ["epi", 8], int16_t: ["epi", 16], int32_t: ["epi", 32], int64_t: ["epi", 64], float: ["p", "s"], double: ["p", "d"],
+            u8: ["epu", 8], u16: ["epu", 16], u32: ["epu", 32], u64: ["epu", 64], i8: ["epi", 8], i16: ["epi", 16], i32: ["epi", 32], i64: ["epi", 64], f32: ["p", "s"], f64: ["p", "d"]}
+intrin_tp_full: {uint8_t: "epu8", uint16_t: "epu16", uint32_t: "epu32", uint64_t: "epu64", int8_t: "epi8", int16_t: "epi16", int32_t: "epi32", int64_t: "epi64", float: "ps", double: "pd",
+            u8: "epu8", u16: "epu16", u32: "epu32", u64: "epi64", i8: "epi8", i16: "epi16", i32: "epi32", i64: "epi64", f32: "ps", f64: "pd"}
 runtime_headers: ["cpu/include/tslCPUrt.hpp"]
+# Rust information
+register_type_mapping: [["u8","__m512i"], ["u16","__m512i"], ["u32","__m512i"], ["u64","__m512i"], ["i8","__m512i"], ["i16","__m512i"], ["i32","__m512i"], ["i64","__m512i"], ["f32","__m512"], ["f64","__m512d"]]
+imask_mapping: [["u8","u64"], ["u16","u32"], ["u32", "u16"], ["u64", "u8"], ["i8","u64"], ["i16", "u32"], ["i32", "u16"], ["i64", "u8"], ["f32", "u16"], ["f64", "u8"]]
+mask_type_rust: "Self::RegisterType"
+includes_rust: ["std::arch::x86_64::*"] 
 ...

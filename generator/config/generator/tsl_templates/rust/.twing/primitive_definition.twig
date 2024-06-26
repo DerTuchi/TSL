@@ -7,15 +7,16 @@
 {% set ns_contains_parameter_pack = false %}
 {% set ns_parameter_pack_typenames_str = '' %}
 {% set ns_full_qualified_parameters_str = '' %}
-{% set ns_full_qualified_parameters_str_bridge = '' %}
 {% set ns_parameters_str = '' %}
 {% set ns_parameters_types = '' %}
 {% set ns_has_parameters_tuple = true %}
 {% set ns_using_return_type = '' %}
 {% set ns_return_template_type = '' %}
 {% set ns_additional_templates = '' %}
-{% set ns_additional_template_params = '' %}
+{% set ns_additional_non_specialized_template_params = '' %}
+{% set ns_additional_specialized_template_params = '' %}
 {% set ns_additional_target_extension = '' %}
+{% set ns_additional_default_param = '' %}
 {% set ns_simd_register_length = '' %}
 
 {% if vector_length_agnostic and vector_length_bits != 0 %}
@@ -23,16 +24,7 @@
 {{ _self.abort("A specialization can be either vector length agnostig or have a vector-length-dependent specialization.") }}
 {% endif %}
 
-{% if vector_length_agnostic %}
-   {% set ns_simd_register_length = ', VectorSize' %}
-   {% set ns_full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns_simd_register_length ~ '>' %}
-{% elseif vector_length_bits != 0 %}
-   {% set ns_simd_register_length = ', ' ~ vector_length_bits %}
-   {% set ns_full_extension_name = 'simd<' ~ ctype ~ ', ' ~ target_extension ~ ns_simd_register_length~ '>' %}
-{% else %}
-   {% set ns_simd_register_length = '' %}
-   {% set ns_full_extension_name = ctype_rust ~ ', ' ~ target_extension %}
-{% endif %}
+{% set ns_full_extension_name = target_extension ~ '<' ~ ctype ~ '>' %}
 {% if ctype == 'T' %}
 {% set ns_partial_specialized = true %}
 {% endif %}
@@ -60,37 +52,58 @@
       {% else %}
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
-      {% set ns_full_qualified_parameters_str = ns_full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype | filter_reg_cpp(simdT_default_size_in_bits, param['ctype']) | filter_ctype_rust  ~ comma %}
-      {% set ns_full_qualified_parameters_str_bridge = ns_full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
+      {% set ns_full_qualified_parameters_str = ns_full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype ~ comma %}
       {% set ns_parameters_str = ns_parameters_str ~ param['name'] ~ comma %}
       {% set ns_parameters_types = ns_parameters_types ~ param['ctype'] ~ comma %}
    {% endif %}
 {% endfor %}
 {% if additional_simd_template_parameter["name"] != "" %}
-    {% if additional_simd_template_extension != "" %}
-        {% set ns_additional_target_extension = additional_simd_template_extension %}
+    {% if additional_simd_template_extension != "" and additional_simd_template_base_type != "" %}
+        {% set temp = additional_simd_template_extension ~ '<' ~ additional_simd_template_base_type ~ '>' %}
+        {% set ns_additional_specialized_template_params = ', ' ~ temp %}
+        {% set ns_additional_target_extension = temp %}
+    {% elseif additional_simd_template_extension != "" %}
+        {% set temp = additional_simd_template_extension ~ '<' ~ ctype ~ '>' %}
+        {% set ns_additional_specialized_template_params = ', ' ~ temp %}
+        {% set ns_additional_target_extension = temp %}
+    {% elif additional_simd_template_base_type != "" %}
+        {% set temp = target_extension ~ '<' ~ additional_simd_template_base_type ~ '>' %}
+        {% set ns_additional_specialized_template_params = ', ' ~ temp %}
+        {% set ns_additional_target_extension = temp %}
+    {% elif additional_simd_template_parameter["default_value"] != "" %}
+        {% set ns_additional_specialized_template_params = ', ' ~ additional_simd_template_parameter["default_value"] %}
+        {% set ns_additional_target_extension = additional_simd_template_parameter["default_value"] %}
     {% else %}
-        {% set ns_additional_target_extension = target_extension %}
+        {% set ns_additional_specialized_template_params = ', ' ~ ns_full_extension_name %}
+        {% set ns_additional_target_extension = ns_full_extension_name %}
     {% endif %}
     {% set ns_using_return_type = 'using ' ~ additional_simd_template_parameter["name"] ~ ' = simd<' ~ additional_simd_template_base_type ~ ', ' ~ ns_additional_target_extension ~ ns_simd_register_length ~ '>;' %}
     {% set ns_return_template_type = 'simd<' ~ additional_simd_template_base_type ~ ', ' ~ ns_additional_target_extension ~ ns_simd_register_length ~ '>, ' %}
 {% endif %}
+{% set ns_additional_templates = '< const Idof: bool ' %}
 {% if additional_non_specialized_template_parameters is not empty %}
+{% set ns_additional_templates = ns_additional_templates ~ ', ' %}
 {% for parameter_dict in additional_non_specialized_template_parameters %}
 {% set loop_comma = (loop.first) ? '' : ', ' %}
-{% set ns_additional_templates = ns_additional_templates ~ loop_comma ~ parameter_dict["ctype"] ~ ' ' ~ parameter_dict["name"] %}
-{% set ns_additional_template_params = ns_additional_template_params ~ loop_comma ~ parameter_dict["name"] %}
-{% endfor %}
-{% set ns_additional_templates = ns_additional_templates ~ ", " %}
-{% set ns_additional_template_params = ns_additional_template_params ~ ", " %}
+{% set ns_additional_templates = ns_additional_templates ~ loop_comma ~ 'const ' ~ parameter_dict["name"] ~ ' : ' ~ parameter_dict["ctype"] %}
+{% if parameter_dict["default_value"] != "" %}
+{% set ns_additional_default_param = ns_additional_default_param ~ ', ' ~ parameter_dict["name"] %}
+{% else %}
+{% set ns_additional_non_specialized_template_params = ns_additional_non_specialized_template_params ~ loop_comma ~ parameter_dict["name"] %}
 {% endif %}
+{% endfor %}
+{% set ns_additional_non_specialized_template_params = ns_additional_non_specialized_template_params ~ ", " %}
+{% endif %}
+{% set ns_additional_templates = ns_additional_templates ~ '>' %}
+{% set check = '()' if not is_native else 'assert!(Self::is_native == Idof, , "The primitive {{ functor_name }} is not supported by your hardware natively while it is forced by using native");'%}
 {# Every implementation is in the (nested) namespace "details" #}
-impl {{ functor_name }}<{{ ns_full_extension_name }}> {
+
+impl{{ns_additional_templates}} SimdPrimitiveImpl for {{ functor_name }}<Idof, {{ns_additional_non_specialized_template_params}}{{ ns_full_extension_name }}{{ns_additional_specialized_template_params}}{{ns_additional_default_param}}> {
     /**
      * @brief: Template specialization of implementation for "{{ functor_name }}" (primitive {{ primitive_name }}).
      * @details:
      * Target Extension: {{ target_extension }}.
-     *        Data Type: {{ ctype_rust }}
+     *        Data Type: {{ ctype }}
      *  Extension Flags: {{ lscpu_flags }}
      {% if yaml_origin_line and yaml_origin_file %}
      *      Yaml Source: {{ yaml_origin_file }}::{{ yaml_origin_line }}
@@ -99,24 +112,31 @@ impl {{ functor_name }}<{{ ns_full_extension_name }}> {
      * @note: {{ specialization_comment }}
      {% endif %}
      */
-    pub fn parameters_queryable() -> bool{
-        return {{ (ns_has_parameters_tuple) ? 'true' : 'false' }};
-    }
-    pub fn has_return_value() -> bool {
-        return {{ (returns['ctype'] != 'void') ? 'true' : 'false' }};
-    }
-    pub fn native_supported() -> bool {
-{# If there is hardware support this function returns true, false otherwise. #}
-        return {{ (is_native) ? 'true;' : 'false;' }}
-    }
 
-    {{ (returns['ctype'] != 'void') ? '#[must_use] ' : '' }}{{ (is_native) ? '' : '#[deprecated(note = "This primitive is not supported by your hardware natively. Thus, a workaround is used.")]' }}
+    type BaseType = {{ctype}};
+    type TargetExtension = {{ns_full_extension_name}};
+    type AdditionalParam = {{ (additional_simd_template_parameter["name"] != "") ? ns_additional_target_extension : '()' }};
+    type RegisterType = <Self::TargetExtension as TargetExtension>::RegisterType;
+    type ImaskType = <Self::TargetExtension as TargetExtension>::ImaskType;
+    type MaskType = <Self::TargetExtension as TargetExtension>::MaskType;
+    type OffsetBaseType = <Self::TargetExtension as TargetExtension>::OffsetBaseType;
+    type OffsetBaseRegisterType = <Self::TargetExtension as TargetExtension>::OffsetBaseRegisterType;
+    type Args = ({{ns_parameters_types}});
+    type ReturnType = {{ (returns['ctype'] == 'void') ? '()' : returns['ctype'] }};
+    const IS_NATIVE: bool = {{ (is_native) ? 'true;' : 'false;' }}
+    const PARAMETERS_QUERYABLE : bool = {{ (ns_has_parameters_tuple) ? 'true' : 'false' }};
+    const HAS_RETURN_VALUE : bool = {{ (returns['ctype'] != 'void') ? 'true' : 'false' }};
+    {% if not is_native %}
+    const CHECK: () = assert!(Self::is_native == Idof, "The primitive '{{ functor_name }}' is not supported by your hardware natively while it is forced by using native");
+    {% else %}
+    const CHECK: () = (); // function is native so no check for Idof needed.
+    {% endif %}
+
+    {{ (returns['ctype'] != 'None') ? '#[must_use] ' : '' }}
     {{ (force_inline) ? '#[inline(always)]' : '' }}
-    pub fn apply({{ ns_full_qualified_parameters_str }}) -> {{ctype | filter_reg_cpp(simdT_default_size_in_bits, returns['ctype']) | filter_ctype_rust}}{
-        {% for param in parameters %}
-        let {{param['name']}}_arr: [{{ctype_rust}} ; {{param['arr_length']}}] = unsafe {std::mem::transmute({{param['name']}})};
-        {% endfor %}
-        let result = ffi::{{functor_name}}_{{target_extension}}_{{ctype_rust}}({{ns_full_qualified_parameters_str_bridge}});
-        unsafe {std::mem::transmute(result)}
+    unsafe fn apply(args: Self::Args) -> Self::ReturnType{
+        let _ = Self::CHECK;
+        let ({{ns_parameters_str}}) = args;
+        {{ implementation }}
     }
 } // end of struct {{ functor_name }} for template specialization of {{ functor_name }} for {{ target_extension }} using {{ ctype }}.

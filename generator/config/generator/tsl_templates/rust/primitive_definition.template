@@ -11,7 +11,6 @@
    contains_parameter_pack=False,
    parameter_pack_typenames_str='',
    full_qualified_parameters_str='',
-   full_qualified_parameters_str_bridge='',
    parameters_str='',
    parameters_types='',
    has_parameters_tuple=True,
@@ -52,7 +51,6 @@
       {% set attribs = ' ' ~ param['attributes'] ~ ' ' %}
       {% endif %}
       {% set ns.full_qualified_parameters_str = ns.full_qualified_parameters_str ~ decl_attribs ~ param['name'] ~ ' : ' ~ ctype ~ comma %}
-      {% set ns.full_qualified_parameters_str_bridge = ns.full_qualified_parameters_str_bridge ~ param['name'] ~ '_arr' ~ comma %}
       {% set ns.parameters_str = ns.parameters_str ~ param['name'] ~ comma %}
       {% set ns.parameters_types = ns.parameters_types ~ param['ctype'] ~ comma %}
    {% endif %}

@@ -3,8 +3,6 @@ from generator.core.tsl_config import config
 
 import copy
 import logging
-from collections import defaultdict
-import re
 
 from pathlib import Path
 from typing import Generator
@@ -92,7 +90,10 @@ class TSLFileGenerator:
             target_primitives = [i for i in primitive_class if i.declaration.data["target_language"] == config.get_config_entry("target_language")]
             for primitive in target_primitives:
                 declaration_data = copy.deepcopy(primitive.declaration.data)
-                declaration_data["additional_parameter_type"] = any(bool(definition.data["additional_simd_template_extension"]) for definition in primitive.definitions)
+
+                if config.get_config_entry("target_language") == "rust":
+                    declaration_data["additional_parameter_type"] = any(bool(definition.data["additional_simd_template_extension"]) for definition in primitive.definitions)
+
                 declaration_data["tsl_function_doxygen"] = config.get_template("core::doxygen_function").render(
                     declaration_data)
                 declaration_file.add_code(
@@ -107,8 +108,7 @@ class TSLFileGenerator:
                             f"{primitive_class.name}_{definition.target_extension}").with_suffix(
                             config.get_config_entry("header_file_extension"))
                         definition_files_per_extension_dict[
-                            definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path,
-                                                                                        primitive_class.data)
+                            definition.target_extension] = TSLHeaderFile.create_from_dict(primitive_path, primitive_class.data)
                     definition_file: TSLHeaderFile = definition_files_per_extension_dict[definition.target_extension]
                     # print(definition)
 

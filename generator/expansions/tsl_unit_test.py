@@ -495,7 +495,7 @@ class TSLTestGenerator:
 
         dep_graph.inspect_tests()
         
-        # print(dep_graph.as_str(True)) TODO: Cycle detection does not work. Why?
+        # print(dep_graph.as_str(True)) TODO: does not work for Rust implementation
 
         unit_test_config: dict = config.get_expansion_config("unit_tests")
 
